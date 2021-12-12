@@ -17,9 +17,8 @@
 package net.liftweb.sitemap
 
 import net.liftweb.http.{S, LiftRules}
-import net.liftweb.common.{Full, Empty}
 import net.liftweb.mockweb.WebSpec
-import scala.xml.{Elem, Group, NodeSeq}
+import scala.xml.{ Elem, NodeSeq }
 
 object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
   "FlexMenuBuilder Specification".title
@@ -82,7 +81,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
  * you could just use "() => bootstrap.Boot.boot".
  */
 object FlexMenuBuilderSpecBoot {
-  def boot() {
+  def boot(): Unit = {
     def siteMap = SiteMap(
       Menu.i("Home") / "index",
       Menu.i("Help") / "help" submenus (

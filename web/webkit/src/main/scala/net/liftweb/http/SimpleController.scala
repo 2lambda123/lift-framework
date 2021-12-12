@@ -17,9 +17,7 @@
 package net.liftweb
 package http
 
-import scala.collection.immutable.TreeMap
 import net.liftweb.common._
-import net.liftweb.util._
 import provider._
 
 /**
@@ -50,11 +48,11 @@ trait SimpleController
       case _ => Empty
     }
 
-  def set(name: String, value: String) {
+  def set(name: String, value: String): Unit = {
     httpRequest.session.setAttribute(name, value)
   }
 
-  def unset(name: String) {
+  def unset(name: String): Unit = {
     httpRequest.session.removeAttribute(name)
   }
 }

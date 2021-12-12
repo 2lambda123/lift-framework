@@ -28,8 +28,6 @@ class SiteMapException(msg: String) extends Exception(msg)
 
 case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocParam]],
                    private val convertablekids: ConvertableToMenu*) extends HasKids  {
-  import SiteMap._
-
   lazy val kids: Seq[Menu] = convertablekids.map(_.toMenu)
 
   private var locs: Map[String, Loc[_]] = Map.empty
@@ -45,9 +43,9 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
 
   kids.foreach(_._parent = Full(this))
   kids.foreach(_.init(this))
-  kids.foreach(_.validate)
+  kids.foreach(_.validate())
 
-  private[sitemap] def addLoc(in: Loc[_]) {
+  private[sitemap] def addLoc(in: Loc[_]): Unit = {
     val name = in.name
     if (locs.isDefinedAt(name))
     throw new SiteMapException("Location "+name+" defined twice "+
@@ -242,8 +240,10 @@ sealed class SiteMapSingleton {
   /**
    * A Java-callable method that builds a SiteMap
    */
+  // ArraySeq can be used when compatibility with 2.12 is dropped.
+  @scala.annotation.nowarn("msg=Passing an explicit array value to a Scala varargs method is deprecated \\(since 2.13.0\\) and will result in a defensive copy; Use the more efficient non-copying ArraySeq.unsafeWrapArray or an explicit toIndexedSeq call")
   def build(kids: Array[ConvertableToMenu]): SiteMap = 
-    this.apply(kids :_*)
+    this.apply(kids:_*)
 
   def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
 

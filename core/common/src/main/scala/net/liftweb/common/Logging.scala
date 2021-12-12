@@ -102,7 +102,7 @@ object Logger {
       f
     } finally {
       if (old eq null) 
-        MDC.clear
+        MDC.clear()
       else  
         SLF4JMDC.setContextMap(old)
     }
@@ -354,7 +354,7 @@ object Log4j {
   /**
    * Configure with simple defaults. See [[defaultProps]].
    */
-  def withDefault() = withConfig(defaultProps)
+  def withDefault() = withConfig(defaultProps)()
 }
 
 /**
@@ -362,7 +362,6 @@ object Log4j {
  */
 object Logback  {
   import ch.qos.logback.classic.LoggerContext;
-  import ch.qos.logback.core.util.StatusPrinter;
   import ch.qos.logback.classic.joran.JoranConfigurator;
 
   /**

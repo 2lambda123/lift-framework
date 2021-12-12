@@ -19,11 +19,10 @@ package http
 package rest 
 
 import net.liftweb._
-import actor.LAFuture
 import json._
 import common._
 import util._
-import scala.xml.{Elem, Node, Text}
+import scala.xml.{Elem, Text}
 
 /**
  * Mix this trait into a class to provide a list of REST helper methods
@@ -472,7 +471,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * The class that wraps anything for auto conversion to JSON or XML
    */
-  protected final case class AutoJsonXmlAble(obj: Any)
+  protected case class AutoJsonXmlAble(obj: Any)
 
   /**
    * wrap anything for autoconversion to JSON or XML

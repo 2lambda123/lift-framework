@@ -153,6 +153,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * The status displayed when using &lt;nav:records/&gt; in the template.
    */
+  @scala.annotation.nowarn("msg=Passing an explicit array value to a Scala varargs method is deprecated \\(since 2.13.0\\) and will result in a defensive copy; Use the more efficient non-copying ArraySeq.unsafeWrapArray or an explicit toIndexedSeq call")
   def currentXml: NodeSeq =
     if(count==0)
       Text(S.?("paginator.norecords"))

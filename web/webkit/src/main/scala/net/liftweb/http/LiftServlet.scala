@@ -67,7 +67,7 @@ class LiftServlet extends Loggable {
       }
 
       tryo {
-        Schedule.shutdown
+        Schedule.shutdown()
       }
       tryo {
         LAScheduler.shutdown()
@@ -102,7 +102,7 @@ class LiftServlet extends Loggable {
 
     val req = if (null eq reqOrg) reqOrg else reqOrg.snapshot
 
-    def runFunction(doAnswer: LiftResponse => Unit) {
+    def runFunction(doAnswer: LiftResponse => Unit): Unit = {
       Schedule.schedule(() => {
         val answerFunc: (=> LiftResponse) => Unit = response =>
           doAnswer(wrapState(req, session)(response))
@@ -186,23 +186,6 @@ class LiftServlet extends Loggable {
     case x :: xs => flatten(xs)
   }
 
-  private def authPassed_?(req: Req): Boolean = {
-
-    val checkRoles: (Role, List[Role]) => Boolean = {
-      case (resRole, roles) => (false /: roles)((l, r) => l || resRole.isChildOf(r.name))
-    }
-
-    val role = NamedPF.applyBox(req, LiftRules.httpAuthProtectedResource.toList)
-    role.map(_ match {
-      case Full(r) =>
-        LiftRules.authentication.verified_?(req) match {
-          case true => checkRoles(r, userRoles.get)
-          case _ => false
-        }
-      case _ => LiftRules.authentication.verified_?(req)
-    }) openOr true
-  }
-
   private val recent: LRUMap[String, Int] = new LRUMap(2000)
 
   private def registerRecentlyChecked(id: String): Unit =
@@ -254,7 +237,7 @@ class LiftServlet extends Loggable {
     def authPassed_?(req: Req): Boolean = {
 
       val checkRoles: (Role, List[Role]) => Boolean = {
-        case (resRole, roles) => (false /: roles)((l, r) => l || resRole.isChildOf(r.name))
+        case (resRole, roles) => roles.foldLeft(false)((l, r) => l || resRole.isChildOf(r.name))
       }
 
       val role = NamedPF.applyBox(req, LiftRules.httpAuthProtectedResource.toList)
@@ -502,7 +485,7 @@ class LiftServlet extends Loggable {
             } finally {
               if (S.functionMap.size > 0) {
                 liftSession.updateFunctionMap(S.functionMap, S.renderVersion, millis)
-                S.clearFunctionMap
+                S.clearFunctionMap()
               }
               liftSession.notices = S.getNotices
             }
@@ -513,8 +496,6 @@ class LiftServlet extends Loggable {
 
         case _ => (false, Empty)
       }
-
-    val wp = req.path.wholePath
 
     if (LiftRules.enableContainerSessions && !req.stateless_?) {
       req.request.session
@@ -647,7 +628,7 @@ class LiftServlet extends Loggable {
           } finally {
             if (S.functionMap.size > 0) {
               liftSession.updateFunctionMap(S.functionMap, RenderVersion.get, millis)
-              S.clearFunctionMap
+              S.clearFunctionMap()
             }
           }
       }
@@ -868,7 +849,7 @@ class LiftServlet extends Loggable {
         if (!S.functionMap.isEmpty) {
           session.updateFunctionMap(S.functionMap,
             ar.who.uniqueId, ar.when)
-          S.clearFunctionMap
+          S.clearFunctionMap()
         }
 
         ret
@@ -920,7 +901,7 @@ class LiftServlet extends Loggable {
 
   val dumpRequestResponse = Props.getBool("dump.request.response", false)
 
-  private def logIfDump(request: Req, response: BasicResponse) {
+  private def logIfDump(request: Req, response: BasicResponse): Unit = {
     if (dumpRequestResponse) {
       val toDump = request.uri + "\n" +
         request.params + "\n" +
@@ -940,7 +921,7 @@ class LiftServlet extends Loggable {
    * Sends the  { @code HTTPResponse } to the browser using data from the
    * { @link Response } and  { @link Req }.
    */
-  private[http] def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Req) {
+  private[http] def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Req): Unit = {
     def fixHeaders(headers: List[(String, String)]) = headers map ((v) => v match {
       case ("Location", uri) =>
         val u = request
@@ -951,13 +932,6 @@ class LiftServlet extends Loggable {
           ))
       case _ => v
     })
-
-    def pairFromRequest(req: Req): (Box[Req], Box[String]) = {
-      val acceptHeader = for (innerReq <- Box.legacyNullTest(req.request);
-                              accept <- innerReq.header("Accept")) yield accept
-
-      (Full(req), acceptHeader)
-    }
 
     val resp = liftResp.toResponse
 

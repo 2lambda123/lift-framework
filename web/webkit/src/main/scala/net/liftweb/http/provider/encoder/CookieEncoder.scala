@@ -21,7 +21,6 @@ package encoder
 
 import java.util._
 import net.liftweb.http.provider.{HTTPCookie, SameSite}
-import net.liftweb.common.{Full}
 
 /**
   * Converts an HTTPCookie into a string to used as header cookie value.
@@ -40,8 +39,6 @@ object CookieEncoder {
   private val VALID_COOKIE_NAME_OCTETS = validCookieNameOctets();
 
   private val VALID_COOKIE_VALUE_OCTETS = validCookieValueOctets();
-
-  private val VALID_COOKIE_ATTRIBUTE_VALUE_OCTETS = validCookieAttributeValueOctets();
 
   private val PATH = "Path"
 
@@ -171,16 +168,10 @@ object CookieEncoder {
     bits
   }
 
-  private def validCookieAttributeValueOctets() = {
-    val bits = new BitSet()
-    (32 until 127) foreach bits.set
-    bits.set(';', false)
-    bits
-  }
-
   private def stripTrailingSeparator(buf: StringBuilder) = {
-    if (buf.length() > 0) {
-      buf.setLength(buf.length() - 2);
+    val lg = buf.length
+    if (lg > 0) {
+      buf.setLength(lg - 2);
     }
     buf.toString()
   }

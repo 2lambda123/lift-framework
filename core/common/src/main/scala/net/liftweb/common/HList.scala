@@ -109,7 +109,7 @@ object HLists {
    * }}}
    */
   final case class :+:[+H, +T <: HList](head: H, tail: T) extends HList {
-    override def toString = head + " :+: " + tail
+    override def toString = head.toString + " :+: " + tail
   }
 
   /**
@@ -129,7 +129,7 @@ object HLists {
       hlist match {
         case HNil =>
           0
-        case head :+: rest =>
+        case head@_ :+: rest =>
           1 + rest.length
       }
     }

@@ -17,10 +17,8 @@
 package net.liftweb
 package http
 
-import net.liftweb.common._
 import net.liftweb._
 import util._
-import Helpers._
 import scala.xml.{NodeSeq, Elem}
 
 /**
@@ -64,7 +62,7 @@ import scala.xml.{NodeSeq, Elem}
  */
 trait StatefulSnippet extends DispatchSnippet {
   private[this] var _names: Set[String] = Set()
-  def addName(name: String) {
+  def addName(name: String): Unit = {
     synchronized {
       _names = _names + name
     }

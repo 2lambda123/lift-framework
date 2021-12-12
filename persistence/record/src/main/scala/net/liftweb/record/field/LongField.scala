@@ -18,13 +18,10 @@ package net.liftweb
 package record 
 package field 
 
-import scala.xml._
 import net.liftweb.common._
-import net.liftweb.http.{S}
 import json._
 import net.liftweb.util._
 import Helpers._
-import S._
 
 trait LongTypedField extends NumericTypedField[Long] {
   
@@ -51,19 +48,21 @@ trait LongTypedField extends NumericTypedField[Long] {
   }
 }
 
-class LongField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class LongField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Long, OwnerType] with MandatoryTypedField[Long] with LongTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Long) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Long) = {
     this(owner)
     set(value)
   }
 }
 
-class OptionalLongField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalLongField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Long, OwnerType] with OptionalTypedField[Long] with LongTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Long]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[Long]) = {
     this(owner)
     setBox(value)
   }

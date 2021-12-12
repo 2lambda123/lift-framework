@@ -21,7 +21,6 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-import collection.mutable.{HashMap, ListBuffer}
 import js.JE.{AnonFunc, JsObj, JsRaw}
 import js.JsCmds._Noop
 import scala.xml._
@@ -199,6 +198,9 @@ object LiftSession {
   private[http] class DataAttrNode(liftSession: LiftSession) {
     val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
 
+    // to(LazyList) instead of toStream once compatibility with 2.12 is
+    // dropped.
+    @scala.annotation.nowarn("msg=method toStream in trait IterableOnceOps is deprecated \\(since 2.13.0\\): Use .to\\(LazyList\\) instead of .toStream")
     def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
       in match {
         case element: Elem if dataAttributeProcessors.nonEmpty =>
@@ -258,7 +260,7 @@ private[http] object RenderVersion {
 
           if (S.functionMap.size > 0) {
             sess.updateFunctionMap(S.functionMap, this.get, millis)
-            S.clearFunctionMap
+            S.clearFunctionMap()
           }
           ret
         }
@@ -372,6 +374,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
     * Private no-arg constructor needed for deserialization.
     */
+  @scala.annotation.nowarn("msg=private constructor in class LiftSession is never used")
   private[this] def this() = this("", "", Empty)
 
   def sessionHtmlProperties = LiftRules.htmlProperties.session.is.make openOr LiftRules.htmlProperties.default.is.vend
@@ -439,7 +442,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * See LiftServlet.handleAjax for how we determine we no longer need
    * to hold a reference to an AJAX request.
    */
-  private var ajaxRequests = scala.collection.mutable.Map[String,List[AjaxRequestInfo]]()
+  private val ajaxRequests = scala.collection.mutable.Map[String,List[AjaxRequestInfo]]()
 
   private[http] def withAjaxRequests[T](fn: (scala.collection.mutable.Map[String, List[AjaxRequestInfo]]) => T) = {
     ajaxRequests.synchronized { fn(ajaxRequests) }
@@ -547,7 +550,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     override private[liftweb] def magicSessionVar_? = true
   }
 
-  def terminateHint {
+  def terminateHint(): Unit = {
     if (_running_?) {
       markedForTermination = true;
     }
@@ -646,7 +649,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     var availableOwners = Set[String]()
     var removedOwners = Set[String]()
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     nmessageCallback.asScala.foreach {
       case (functionName, funcHolder) if test(funcHolder) =>
         funcHolder.owner.foreach(removedOwners += _)
@@ -673,7 +676,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Called just before the session exits.  If there's clean-up work, override this method
    */
-  private[http] def cleanUpSession() {
+  private[http] def cleanUpSession(): Unit = {
     removeFunctionsIf(_ => true)
     notices = Nil
     nasyncComponents.clear
@@ -701,7 +704,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   def doCometActorCleanup(): Unit = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     this.nasyncComponents.values.asScala.foreach(_ ! ShutdownIfPastLifespan)
   }
@@ -716,14 +719,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Destroy this session and the underlying container session.
    */
-  def destroySession() {
+  def destroySession(): Unit = {
     SessionMaster ! RemoveSession(this.underlyingId)
 
     S.request.foreach(_.request.session.terminate)
     this.doShutDown()
   }
 
-  private[http] def doShutDown() {
+  private[http] def doShutDown(): Unit = {
     if (running_?) {
       // only deal with comet on stateful sessions
       // stateless temporary sessions bar comet use
@@ -791,7 +794,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * This is used by CometActor to remove the PostPage JavaScript
    * functions from the given component during redraw.
    */
-  def clearPostPageJavaScriptForThisPage() {
+  def clearPostPageJavaScriptForThisPage(): Unit = {
     testStatefulFeature {
       accessPostPageFuncs {
         val rv: String = RenderVersion.get
@@ -810,7 +813,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @param func -- the function that returns JavaScript to be appended to
    * responses associated with this page
    */
-  def addPostPageJavaScript(func: () => JsCmd) {
+  def addPostPageJavaScript(func: () => JsCmd): Unit = {
     testStatefulFeature {
       accessPostPageFuncs {
         // The page or cometactor that the functions are associated with
@@ -849,7 +852,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       }
     }
 
-    def run(count: Int, funcs: List[() => JsCmd]) {
+    def run(count: Int, funcs: List[() => JsCmd]): Unit = {
       funcs.reverse.foreach(f => accumulatedJavaScript += f())
 
       latestPostPageFunctions.foreach { latest =>
@@ -904,8 +907,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       }
     }
 
-      import scala.collection.JavaConverters._
-      (0 /: nmessageCallback.asScala)((l, v) => l + (v._2.owner match {
+      import scala.jdk.CollectionConverters._
+      (nmessageCallback.asScala).foldLeft(0)((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -920,7 +923,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Returns true if there are functions bound for this owner
    */
   private[http] def hasFuncsForOwner(owner: String): Boolean = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     !nmessageCallback.asScala.find(_._2.owner == owner).isEmpty
   }
@@ -937,7 +940,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         SessionMaster.sendMsg(RemoveSession(this.underlyingId))
 
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         nasyncComponents.asScala.foreach {
           case (_, comp) => done ::= (() => tryo(comp ! ShutDown))
         }
@@ -989,7 +992,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
             // Clear the function map after copying it... but it
             // might get some nifty new functions during the merge phase
-            S.clearFunctionMap
+            S.clearFunctionMap()
 
             // Phase 2: Head & Tail merge, add additional elements to body & head
             val xml = merge(rawXml, request)
@@ -1080,7 +1083,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           val response: Box[LiftResponse] = early or (request.testLocation match {
             case Left(true) =>
               checkStatelessInSiteMap(request) {
-                cleanUpBeforeRender
+                cleanUpBeforeRender()
 
                 PageName(request.uri + " -> " + request.path)
                 LiftRules.allowParallelSnippets.doWith(() => !Props.inGAE) {
@@ -1131,7 +1134,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def performHeadMerge(in: NodeSeq, req: Req): Node = merge(in, req)
 
-  private def cleanUpBeforeRender {
+  private def cleanUpBeforeRender(): Unit = {
     // Reset the mapping between ID and Style for Ajax notices.
     MsgErrorMeta(new HashMap)
     MsgWarningMeta(new HashMap)
@@ -1199,27 +1202,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
 
-  private def allElems(in: NodeSeq, f: Elem => Boolean): List[Elem] = {
-    val lb = new ListBuffer[Elem]
-
-    def appendAll(in: NodeSeq, lb: ListBuffer[Elem]) {
-      in.foreach {
-        case Group(ns) => appendAll(ns, lb)
-        case e: Elem if f(e) => lb += e; appendAll(e.child, lb)
-        case e: Elem => appendAll(e.child, lb)
-        case _ =>
-      }
-    }
-    appendAll(in, lb)
-
-    lb.toList
-  }
-
-
   object currentSourceContext extends TransientRequestVar[Any](Empty)
 
   def runSourceContext(value: Any, xform: NodeSeq => NodeSeq, ns: NodeSeq): NodeSeq = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     value match {
       case null => NodeSeq.Empty
       case None => NodeSeq.Empty
@@ -1621,7 +1607,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         if (S.functionMap.size > 0) {
           this.updateFunctionMap(S.functionMap,
             renderVersion, millis)
-          S.clearFunctionMap
+          S.clearFunctionMap()
         }
       }
       }
@@ -1705,7 +1691,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
                       if (inst.dispatch.isDefinedAt(method)) {
                         val res = inst.dispatch(method)(kids)
 
-                        inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet))
+                        inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet()))
                         /* (if (isForm && !res.isEmpty) SHtml.hidden(() => inst.registerThisSnippet) else NodeSeq.Empty) ++
                         res*/
                       } else reportSnippetError(page, snippetName,
@@ -1972,9 +1958,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   liftTagProcessing = LiftRules.liftTagProcessing.toList ::: List(_defaultLiftTagProcessing)
 
-  private def asNodeSeq(in: Seq[Node]): NodeSeq = in
-
-
   private class DeferredProcessor extends SpecializedLiftActor[ProcessSnippet] {
     protected def messageHandler = {
       case ProcessSnippet(f) => f()
@@ -2180,7 +2163,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           Helpers.tryo(shutdownFunc.foreach(_(this)))
         }
 
-        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
+        override def lifespan = Full(TimeSpan(LiftRules.clientActorLifespan.vend.apply(this)))
 
         override def hasOuter = false
 
@@ -2316,7 +2299,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Finds all Comet actors by type
    */
   def findComet(theType: String): List[LiftCometActor] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     testStatefulFeature {
       nasyncComponents.asScala.toList.flatMap {
@@ -2338,11 +2321,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * This method will send a message to a CometActor, whether or not
-   * the CometActor is instantiated.  If the CometActor already exists
-   * in the session, the message will be sent immediately.  If the CometActor
-   * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup `[[queueCometMessage]]` if it is created as part
+   * This method will send a message to a CometActor, whether or not the
+   * CometActor is instantiated. If the CometActor already exists in the
+   * session, the message will be sent immediately. If the CometActor is not
+   * yet instantiated, the message will be sent to the CometActor as part of
+   * setup `[[queueCometMessage(cometType:String,msg:Any):Unit*]]` if it is created as part
    * of the current HTTP request/response cycle.
    *
    * @param theType the type of the CometActor
@@ -2356,7 +2339,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit* the main sendCometMessage]],
    * except that the type argument is taken as a type parameter instead of a string.
    *
    * @param msg the message to send to the CometActor
@@ -2368,7 +2351,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit* the main sendCometMessage]],
    * except that this version will limit based on the name of the comet. Providing `name` as `Empty`,
    * will specifically select comets with no name.
    *
@@ -2386,7 +2369,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit* the main sendCometMessage]],
    * except that this version will limit based on the name of the comet and it takes its type selector
    * as a type parameter.
    *
@@ -2406,7 +2389,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Queue a message for a comet that is not started yet.
    */
-  def queueCometMessage(cometType: String, msg: Any) {
+  def queueCometMessage(cometType: String, msg: Any): Unit = {
     testStatefulFeature {
       cometPreMessagesByType.atomicUpdate(_ :+ cometType -> msg)
     }
@@ -2415,7 +2398,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Queue a message for a comet that is not started yet.
    */
-  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) {
+  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any): Unit = {
     testStatefulFeature {
       cometPreMessagesById.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
     }
@@ -2425,7 +2408,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Queue a message for a comet that is not started yet.
    */
   @deprecated("Please use queueCometMessage instead.", "3.1")
-  def setupComet(cometType: String, cometName: Box[String], msg: Any) {
+  def setupComet(cometType: String, cometName: Box[String], msg: Any): Unit = {
     queueCometMessage(cometType, cometName, msg)
   }
 
@@ -2462,7 +2445,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         }
       }
 
-      import scala.collection.JavaConverters._
       val id = Full(act.uniqueId)
 
       removeFunctionsIf(_.owner == id)
@@ -2721,7 +2703,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
 
 
-        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
+        override def lifespan = Full(TimeSpan(LiftRules.clientActorLifespan.vend.apply(this)))
 
         override def hasOuter = false
 
@@ -2771,6 +2753,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         }
       }
 
+      @scala.annotation.nowarn("msg=type Stream in package scala is deprecated \\(since 2.13.0\\): Use LazyList instead of Stream")
       def localFunc(in: JValue): JsCmd = {
         LAScheduler.execute(() => {
           executeInScope(currentReq, renderVersion)(
@@ -2820,14 +2803,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
                   try {
                     func.asInstanceOf[Function2[Any, RoundTripHandlerFunc, Unit]](reified, new RoundTripHandlerFunc {
                       @volatile private var done_? = false
-                      def done() {
+                      def done(): Unit = {
                         if (!done_?) {
                           done_? = true
                           ca ! DoneMsg(guid)
                         }
                       }
 
-                      def failure(msg: String) {
+                      def failure(msg: String): Unit = {
                         if (!done_?) {
                           done_? = true
                           ca ! FailMsg(guid, msg)
@@ -2858,7 +2841,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       }
 
-                      def send(value: JValue) {
+                      def send(value: JValue): Unit = {
                         if (!done_?) {
                           ca ! ItemMsg(guid, value)
                         }
@@ -3040,6 +3023,7 @@ sealed trait RoundTripInfo {
  * The companion objects. Has tasty implicits
  */
 object RoundTripInfo {
+  @scala.annotation.nowarn("msg=type Stream in package scala is deprecated \\(since 2.13.0\\): Use LazyList instead of Stream")
   implicit def streamBuilder[T](in: (String, T => Stream[Any]))(implicit m: Manifest[T]): RoundTripInfo =
   StreamRoundTrip(in._1, in._2)(m)
 
@@ -3086,6 +3070,7 @@ trait RoundTripHandlerFunc {
   def failure(msg: String): Unit
 }
 
+@scala.annotation.nowarn("msg=type Stream in package scala is deprecated \\(since 2.13.0\\): Use LazyList instead of Stream")
 final case class StreamRoundTrip[T](name: String, func: T => Stream[Any])(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class SimpleRoundTrip[T](name: String, func: T => Any)(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFunc) => Unit)(implicit val manifest: Manifest[T]) extends RoundTripInfo

@@ -18,7 +18,6 @@ package net.liftweb
 package util
 
 import scala.language.postfixOps
-import scala.language.implicitConversions
 
 import scala.util.parsing.combinator._
 import common._
@@ -47,7 +46,7 @@ object CSSHelpers extends ControlHelpers {
         reader close
       }
       val str = res toString;
-      (CSSParser(rootPrefix).fixCSS(str), str);
+      (CssUrlPrefixer(rootPrefix).fixCss(str), str);
   }
 }
 

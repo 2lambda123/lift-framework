@@ -29,7 +29,6 @@ import common._
 import http.js._
 import http.js.JsCmds._
 import http.js.JE._
-import util.Props
 import util.Helpers._
 
 /**
@@ -217,6 +216,7 @@ class LiftJavaScriptSpec extends Specification  {
   def formatjs(lines:List[String]):String = lines.map { _.stripMargin.linesIterator.toList match {
     case init :+ last => (init.map(_ + " ") :+ last).mkString
     case Nil => ""
+    case _ => throw new IllegalArgumentException("List with only one argument is not handled")
   }}.mkString("\n")
 
   object withEnglishLocale extends WithLocale(Locale.ENGLISH)

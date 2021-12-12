@@ -17,15 +17,12 @@ package record
 package field
 
 import net.liftweb.common.{Failure, Empty, Full, Box}
-import net.liftweb.http.js.JsExp
-import net.liftweb.http.js.JE.{JsObj, JsRaw, Num, Str, JsNull}
+import net.liftweb.http.js.JE.{ JsRaw, JsNull }
 import net.liftweb.json._
 import net.liftweb.record._
-import net.liftweb.record.RecordHelpers.jvalueToJsExp
-import net.liftweb.record.field._
 import net.liftweb.util.Helpers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.Manifest
 import scala.xml.{Text, NodeSeq}
 
@@ -133,7 +130,7 @@ class CaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)
 }
 
 @deprecated("Use the more consistently named 'CaseClassField' instead. This class will be removed in Lift 4.", "3.2")
-class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName(Symbol("rec")) owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassField[OwnerType, CaseType](owner)
 
 class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
@@ -255,5 +252,5 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: Ow
 }
 
 @deprecated("Please use the more consistently named 'CaseClassListField' instead. This class will be removed in Lift 4.", "3.2")
-class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName(Symbol("rec")) owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassListField[OwnerType, CaseType](owner)

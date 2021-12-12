@@ -16,13 +16,6 @@
 
 package net.liftweb.json.scalaz
 
-// FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
-// which causes existential types to be inferred for the generated
-// unapply of a case class with a wildcard parameterized type.
-// Ostensibly should be fixed in 2.12, which means we're a ways away
-// from being able to remove this, though.
-import scala.language.existentials
-
 import scalaz.{Equal, Kleisli, Monoid, Semigroup, Show, ValidationNel}
 import scalaz.Validation._
 import scalaz.std.option._
@@ -80,7 +73,7 @@ trait Types {
 
   def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = Kleisli(field[A](name))
 
-  def makeObj(fields: Traversable[(String, JValue)]): JObject =
+  def makeObj(fields: Iterable[(String, JValue)]): JObject =
     JObject(fields.toList.map { case (n, v) => JField(n, v) })
 }
 

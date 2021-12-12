@@ -18,16 +18,14 @@ package net.liftweb
 package http
 package testing
 
-import scala.language.implicitConversions
 
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
-import JsonDSL._
 import net.liftweb.common._
 import scala.xml._
 import scala.xml.Utility.trim
-import java.util.{Map => JavaMap, Set => JavaSet, Iterator => JavaIterator, List => JavaList}
+import java.util.{Iterator => JavaIterator, List => JavaList}
 import java.util.regex.Pattern
 import java.io.IOException
 import org.apache.commons.httpclient._
@@ -201,7 +199,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     }
@@ -216,7 +214,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     }
@@ -269,7 +267,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     })
@@ -342,7 +340,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     })
@@ -456,7 +454,7 @@ trait TestKit extends ClientBuilder with GetPoster with GetPosterHelper {
   def baseUrl: String
 
   class TestHandler(res: TestResponse) {
-    def then(f: TestResponse => TestResponse): TestResponse = f(res)
+    def andThen(f: TestResponse => TestResponse): TestResponse = f(res)
 
     def also(f: TestResponse => Any): TestResponse = {f(res); res}
   }
@@ -518,14 +516,14 @@ trait TestFramework extends TestKit {
 
   // protected lazy val httpClient = new HttpClient(new MultiThreadedHttpConnectionManager)
 
-  def fork(cnt: Int)(f: Int => Any) {
+  def fork(cnt: Int)(f: Int => Any): Unit = {
     val threads = for (t <- (1 to cnt).toList) yield {
-      val th = new Thread(new Runnable {def run {f(t)}})
+      val th = new Thread(new Runnable {def run: Unit = {f(t)}})
       th.start
       th
     }
 
-    def waitAll(in: List[Thread]) {
+    def waitAll(in: List[Thread]): Unit = {
       in match {
         case Nil =>
         case x :: xs => x.join; waitAll(xs)
@@ -612,20 +610,9 @@ object TestHelpers {
   type CRK = JavaList[String]
 
   implicit def jitToIt[T](in: JavaIterator[T]): Iterator[T] = new Iterator[T] {
-    def next: T = in.next
+    def next(): T = in.next()
 
     def hasNext = in.hasNext
-  }
-
-  private def snurpHeaders(in: JavaMap[String, CRK]): Map[String, List[String]] = {
-    def morePulling(e: JavaMap.Entry[String, CRK]): (String, List[String]) = {
-      e.getValue match {
-        case null => (e.getKey, Nil)
-        case a => (e.getKey, a.iterator.toList)
-      }
-    }
-
-    Map(in.entrySet.iterator.toList.filter(e => (e ne null) && (e.getKey != null)).map(e => morePulling(e)): _*)
   }
 }
 
@@ -828,21 +815,6 @@ abstract class BaseResponse(override val baseUrl: String,
                    val theHttpClient: HttpClient) extends
   Response with BaseGetPoster with GetPosterHelper
 {
-  private object FindElem {
-    def unapply(in: NodeSeq): Option[Elem] = in match {
-      case e: Elem => Some(e)
-      case d: Document => unapply(d.docElem)
-      case g: Group => unapply(g.nodes)
-      case n: Text => None
-      case sn: SpecialNode => None
-      case n: NodeSeq => 
-       val ns: Seq[Node] = n
-       val x: Seq[Elem] = ns.flatMap(v => unapply(v))
-       x.headOption
-      case _ => None
-    }
-  }
-
   /**
    * Get the body of the response as XML
    */

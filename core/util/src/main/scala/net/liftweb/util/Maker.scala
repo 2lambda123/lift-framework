@@ -20,7 +20,6 @@ package util
 import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal
 
-import scala.language.implicitConversions
 import scala.reflect.Manifest
 import scala.xml.NodeSeq
 
@@ -50,7 +49,7 @@ trait SimpleInjector extends Injector {
   /**
    * Register a function that will inject for the given Manifest
    */
-  def registerInjection[T](f: () => T)(implicit man: Manifest[T]) {
+  def registerInjection[T](f: () => T)(implicit man: Manifest[T]): Unit = {
     diHash.put(man.toString, f)
   }
 

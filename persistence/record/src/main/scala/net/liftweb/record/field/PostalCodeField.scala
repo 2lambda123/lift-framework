@@ -22,11 +22,7 @@ import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.{S}
-import java.util.regex._
 import java.util.regex.{Pattern => RegexPattern}
-import Helpers._
-import S._
-
 
 trait PostalCodeTypedField extends StringTypedField {
 
@@ -58,7 +54,8 @@ trait PostalCodeTypedField extends StringTypedField {
   }
 }
 
-class PostalCodeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, val country: CountryField[OwnerType]) extends StringField(owner, 32) with PostalCodeTypedField
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class PostalCodeField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType, val country: CountryField[OwnerType]) extends StringField(owner, 32) with PostalCodeTypedField
 
-class OptionalPostalCodeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, val country: CountryField[OwnerType]) extends OptionalStringField(owner, 32) with PostalCodeTypedField
-
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalPostalCodeField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType, val country: CountryField[OwnerType]) extends OptionalStringField(owner, 32) with PostalCodeTypedField

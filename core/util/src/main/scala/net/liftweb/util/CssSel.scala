@@ -28,6 +28,8 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
     case (t: CssBind, AggregatedCssBindFunc(a)) =>
       AggregatedCssBindFunc(t :: a)
     case (t: CssBind, o: CssBind) => AggregatedCssBindFunc(List(t, o))
+    case _ => throw new UnsupportedOperationException(
+      s"Trying to chain unknown objects this = $this, other = $other")
   }
 
   /**
@@ -38,8 +40,6 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
 
 /**
  * A passthrough function that does not change the nodes
- *
- * @tag CssFunction
  */
 object PassThru extends Function1[NodeSeq, NodeSeq] {
   def apply(in: NodeSeq): NodeSeq = in
@@ -48,8 +48,6 @@ object PassThru extends Function1[NodeSeq, NodeSeq] {
 /**
  * Replaces the nodes with an Empty NodeSeq.  Useful
  * for removing unused nodes
- *
- * @tag CssFunction
  */
 object ClearNodes extends Function1[NodeSeq, NodeSeq] {
   def apply(in: NodeSeq): NodeSeq = NodeSeq.Empty
@@ -189,7 +187,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     final def applyAttributeRules(bindList: List[CssBind], elem: Elem): Elem = {
       bindList.map(b => (b, b.css.openOrThrowException("Guarded with test before calling this method").
         subNodes.openOrThrowException("Guarded with test before calling this method"))).
-        foldLeft(elem) {
+        foldLeft(elem) { (elt, binding) => ((elt, binding): @unchecked) match {
         case (elem, (bind, AttrSubNode(attr))) => {
           val calced = bind.calculate(elem).map(findElemIfThereIsOne _)
           val filtered = elem.attributes.filter {
@@ -276,8 +274,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
               elem.scope, elem.minimizeEmpty, elem.child: _*)
 
           }
-        }
-      }
+        }}}
     }
 
 
@@ -360,7 +357,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
       // we can do an open_! here because all the CssBind elems
       // have been vetted
-      bind.css.openOrThrowException("Guarded with test before calling this method").subNodes match {
+      (bind.css.openOrThrowException("Guarded with test before calling this method").subNodes: @unchecked) match {
         case Full(SelectThisNode(kids)) => {
           throw new RetryWithException(if (kids) realE.child else realE)
         }
@@ -394,10 +391,9 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         }
 
         case x if x.isInstanceOf[EmptyBox] ||
-          x == Full(DontMergeClass) ||
-          x == Full(DontMergeAttributes) => {
+          x == Full(DontMergeClass) => {
           val calced = bind.calculate(realE).map(findElemIfThereIsOne _)
-          val skipClassMerge = x == Full(DontMergeClass) || x == Full(DontMergeAttributes)
+          val skipClassMerge = x == Full(DontMergeClass)
 
           calced.length match {
             case 0 => NodeSeq.Empty
@@ -442,20 +438,20 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
 
 
-    final def forId(in: Elem, buff: ListBuffer[CssBind]) {
+    final def forId(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
         rid <- id
         bind <- idMap.get(rid)
       } buff ++= bind
     }
 
-    final def forElem(in: Elem, buff: ListBuffer[CssBind]) {
+    final def forElem(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
         bind <- elemMap.get(in.label)
       } buff ++= bind
     }
 
-    final def forStar(buff: ListBuffer[CssBind], depth: Int) {
+    final def forStar(buff: ListBuffer[CssBind], depth: Int): Unit = {
       for {
         binds <- starFunc
         bind <- binds if (bind match {
@@ -465,14 +461,14 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       } buff += bind
     }
 
-    final def forName(in: Elem, buff: ListBuffer[CssBind]) {
+    final def forName(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
         rid <- name
         bind <- nameMap.get(rid)
       } buff ++= bind
     }
 
-    def findClass(clz: List[String], buff: ListBuffer[CssBind]) {
+    def findClass(clz: List[String], buff: ListBuffer[CssBind]): Unit = {
       clz match {
         case Nil => ()
         case x :: xs => {
@@ -485,11 +481,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
     }
 
-    def forClass(in: Elem, buff: ListBuffer[CssBind]) {
+    def forClass(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       findClass(classes, buff)
     }
 
-    def forAttr(in: Elem, buff: ListBuffer[CssBind]) {
+    def forAttr(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       if (attrMap.isEmpty || attrs.isEmpty) ()
       else {
         for {
@@ -763,8 +759,6 @@ trait CanBind[-T] {
 }
 
 object CanBind extends CssBindImplicits {
-  import scala.language.higherKinds
-
   implicit def stringTransform: CanBind[String] = new CanBind[String] {
     def apply(str: => String)(ns: NodeSeq): Seq[NodeSeq] = {
       val s = str
@@ -868,6 +862,10 @@ object CanBind extends CssBindImplicits {
         if (a eq null) Nil else List(Text(a.toString)))
     }
 
+  // Don't know how to get rid of this warning in scala 2.13 the check
+  // concerning "a equals null". The test may be completetly useless: a Double
+  // value can never be null?
+  @scala.annotation.nowarn("msg=comparing values of types Double and Null using `equals` unsafely bypasses cooperative equality; use `==` instead")
   implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
     new CanBind[T[Double]] {
       def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>

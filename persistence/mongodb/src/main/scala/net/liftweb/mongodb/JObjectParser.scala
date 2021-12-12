@@ -17,13 +17,9 @@
 package net.liftweb
 package mongodb
 
-import scala.collection.JavaConverters._
-
-import java.util.{Date, UUID}
-import java.util.regex.Pattern
+import scala.jdk.CollectionConverters._
 
 import net.liftweb.json._
-import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
 import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
@@ -135,10 +131,10 @@ object JObjectParser extends SimpleInjector {
     // FIXME: This is not ideal.
     private def renderInteger(i: BigInt): Object = {
       if (i <= java.lang.Integer.MAX_VALUE && i >= java.lang.Integer.MIN_VALUE) {
-        new java.lang.Integer(i.intValue)
+        java.lang.Integer.valueOf(i.intValue)
       }
       else if (i <= java.lang.Long.MAX_VALUE && i >= java.lang.Long.MIN_VALUE) {
-        new java.lang.Long(i.longValue)
+        java.lang.Long.valueOf(i.longValue)
       }
       else {
         i.toString

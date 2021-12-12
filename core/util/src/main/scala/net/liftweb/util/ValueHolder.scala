@@ -17,7 +17,6 @@
 package net.liftweb 
 package util 
 
-import scala.language.implicitConversions
 
 trait ValueHolder {
   type ValueType
@@ -60,11 +59,13 @@ trait PValueHolder[T] extends ValueHolder {
 }
 
 object PValueHolder {
+  @scala.annotation.nowarn("msg=private method is in .* is never used")
   implicit def tToVHT[T](in: T): PValueHolder[T] = new PValueHolder[T] {def get = in; def is = get}
   def apply[T](in: T) = tToVHT(in)
 }
 
 object ValueHolder {
+  @scala.annotation.nowarn("msg=private method is in .* is never used")
   implicit def tToVHT[T](in: T): ValueHolder = new PValueHolder[T] {def get = in; def is = get}
   def apply[T](in: T) = tToVHT(in)
 }

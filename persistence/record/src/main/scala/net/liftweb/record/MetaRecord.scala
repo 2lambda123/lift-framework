@@ -19,21 +19,17 @@ package record
 
 import scala.language.existentials
 
-import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
 import common._
 import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
-import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
+import net.liftweb.http.{ Req, LiftResponse, LiftRules }
 import net.liftweb.json._
 import net.liftweb.record.FieldHelpers.expectedA
 import java.lang.reflect.Method
-import field._
-import Box._
 import JE._
-import Helpers._
 
 /**
  * Holds meta information and operations on a record
@@ -125,7 +121,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
 
     for (v <- realMeth) {
       v.invoke(rec) match {
-        case mf: Field[_, BaseRecord] if !mf.ignoreField_? =>
+        case mf: Field[_, BaseRecord] @unchecked if !mf.ignoreField_? =>
           mf.setName_!(v.getName)
           f(v, mf)
         case _ =>
@@ -171,15 +167,15 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   }
 
   /** Make a new record instance. This method can be overridden to provide caching behavior or what have you. */
-  protected def instantiateRecord: BaseRecord = rootClass.newInstance.asInstanceOf[BaseRecord]
+  protected def instantiateRecord: BaseRecord = rootClass.getDeclaredConstructor().newInstance().asInstanceOf[BaseRecord]
 
   /**
    * Creates a new record, setting the value of the fields from the original object but
    * applying the new value for the specific field
    *
-   * @param - original the initial record
-   * @param - field the new mutated field
-   * @param - the new value of the field
+   * @param original - the initial record
+   * @param field - the new mutated field
+   * @param newValue - the new value of the field
    */
   def createWithMutableField[FieldType](original: BaseRecord,
                                         field: Field[FieldType, BaseRecord],
@@ -294,7 +290,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
   def setFieldsFromJsonString(inst: BaseRecord, json: String): Box[Unit] =
     setFieldsFromJValue(inst, JsonParser.parse(json))
 
-  def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any) {
+  def foreachCallback(inst: BaseRecord, f: LifecycleCallbacks => Any): Unit = {
     lifecycleCallbacks.foreach(m => f(m._2.invoke(inst).asInstanceOf[LifecycleCallbacks]))
   }
 
@@ -415,7 +411,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param inst - The record to populate
    * @param req - The Req to read from
    */
-  def setFieldsFromReq(inst: BaseRecord, req: Req) {
+  def setFieldsFromReq(inst: BaseRecord, req: Req): Unit = {
     for(fh <- fieldList){
       fh.field(inst).setFromAny(req.param(fh.name))
     }
@@ -427,7 +423,7 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * @param inst - The record to populate
    * @param rec - The Record to read from
    */
-  def setFieldsFromRecord(inst: BaseRecord, rec: BaseRecord) {
+  def setFieldsFromRecord(inst: BaseRecord, rec: BaseRecord): Unit = {
     for {
       fh <- fieldList
       fld <- rec.fieldByName(fh.name)

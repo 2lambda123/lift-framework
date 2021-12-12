@@ -19,7 +19,6 @@ package record
 
 import http.Factory
 import util.ConnectionIdentifier
-import util.Helpers._
 
 import java.util.Locale
 
@@ -40,6 +39,13 @@ object RecordRules extends Factory {
     * used to easily localize fields based on the locale in the
     * current request
     */
+// Solution proposed here: https://groups.google.com/g/scala-user/c/ICRKvVrYGkk
+// But this crashes the compiler with a stack overflow.
+//  import scala.language.existentials
+//  type RecordImpl = Record[T] forSome {type T <: Record[T]}
+//  val displayName: FactoryMaker[(RecordImpl, Locale, String) => String] =
+//    new FactoryMaker[(Record[_], Locale, String) => String]((m: RecordImpl, l: Locale, name: String) => name) {}
+
   val displayName: FactoryMaker[(Record[_], Locale, String) => String] =
     new FactoryMaker[(Record[_], Locale, String) => String]((m: Record[_], l: Locale, name: String) => name) {}
 }

@@ -106,7 +106,7 @@ trait DB extends Loggable {
 
   private val threadLocalConnectionManagers = new ThreadGlobal[Map[ConnectionIdentifier, ConnectionManager]]
 
-  def defineConnectionManager(name: ConnectionIdentifier, mgr: ConnectionManager) {
+  def defineConnectionManager(name: ConnectionIdentifier, mgr: ConnectionManager): Unit = {
     connectionManagers(name) = mgr
   }
 
@@ -140,8 +140,6 @@ trait DB extends Loggable {
 
       case v => v
     }
-
-  private def postCommit_=(lst: List[() => Unit]): Unit = _postCommitFuncs.set(lst)
 
   // remove thread-local association
   private def clearThread(success: Boolean): Unit = {
@@ -275,14 +273,12 @@ trait DB extends Loggable {
       }
     }
 
-  private def releaseConnection(conn: SuperConnection): Unit = conn.close
-
   private def calcBaseCount(conn: ConnectionIdentifier): Int =
   CurrentConnectionSet.is.map(_.use(conn)) openOr 0
 
   private def getConnection(name: ConnectionIdentifier): SuperConnection = {
     logger.trace("Acquiring " + name + " On thread " + Thread.currentThread)
-    var ret = info.get(name) match {
+    val ret = info.get(name) match {
       case None => ConnectionHolder(newConnection(name), calcBaseCount(name) + 1, Nil, false)
       case Some(ConnectionHolder(conn, cnt, post, rb)) => ConnectionHolder(conn, cnt + 1, post, rb)
     }
@@ -292,7 +288,7 @@ trait DB extends Loggable {
     ret.conn
   }
 
-  private def releaseConnectionNamed(name: ConnectionIdentifier, rollback: Boolean) {
+  private def releaseConnectionNamed(name: ConnectionIdentifier, rollback: Boolean): Unit = {
     logger.trace("Request to release %s on thread %s, auto rollback=%s".format(name,Thread.currentThread, rollback))
 
     (info.get(name): @unchecked) match {
@@ -330,7 +326,7 @@ trait DB extends Loggable {
    * Note: the function will only be called when automatic transaction management is in effect, either by executing within
    * the context of a buildLoanWrapper or a DB.use {}
    */
-  def appendPostTransaction(name: ConnectionIdentifier, func: Boolean => Unit) {
+  def appendPostTransaction(name: ConnectionIdentifier, func: Boolean => Unit): Unit = {
     info.get(name) match {
       case Some(ConnectionHolder(c, n, post, rb)) =>
         info(name) = ConnectionHolder(c, n, func :: post, rb)
@@ -1157,7 +1153,7 @@ trait ProtoDBVendor extends ConnectionManager {
    * Test the connection.  By default, setAutoCommit(false),
    * but you can do a real query on your RDBMS to see if the connection is alive
    */
-  protected def testConnection(conn: Connection) {
+  protected def testConnection(conn: Connection): Unit = {
     conn.setAutoCommit(false)
   }
 

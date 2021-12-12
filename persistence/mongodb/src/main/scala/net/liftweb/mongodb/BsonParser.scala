@@ -17,16 +17,12 @@
 package net.liftweb
 package mongodb
 
-import scala.collection.JavaConverters._
-
-import java.util.{Date, UUID}
-import java.util.regex.Pattern
+import scala.jdk.CollectionConverters._
 
 import net.liftweb.json._
-import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
-import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
+import com.mongodb.{ BasicDBObject, BasicDBList }
 import org.bson.types.ObjectId
 import org.bson._
 
@@ -120,7 +116,7 @@ object BsonParser extends SimpleInjector {
     private def renderValue(jv: JValue)(implicit formats: Formats): BsonValue = jv match {
       case JBool(b) => new BsonBoolean(java.lang.Boolean.valueOf(b))
       case JInt(n) => renderInteger(n)
-      case JDouble(n) => new BsonDouble(new java.lang.Double(n))
+      case JDouble(n) => new BsonDouble(java.lang.Double.valueOf(n))
       case JNull => new BsonNull()
       case JNothing => sys.error("can't render 'nothing'")
       case JString(null) => new BsonString("null")
@@ -130,9 +126,9 @@ object BsonParser extends SimpleInjector {
 
     private def renderInteger(i: BigInt): BsonValue = {
       if (i.isValidInt) {
-        new BsonInt32(new java.lang.Integer(i.intValue))
+        new BsonInt32(java.lang.Integer.valueOf(i.intValue))
       } else if (i.isValidLong) {
-        new BsonInt64(new java.lang.Long(i.longValue))
+        new BsonInt64(java.lang.Long.valueOf(i.longValue))
       }
       else {
         new BsonString(i.toString)

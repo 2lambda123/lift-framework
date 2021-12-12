@@ -22,11 +22,11 @@ import net.liftweb.json._
 import net.liftweb.util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 import net.liftweb.util.Helpers.tryo
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import java.util.UUID
 
-import org.bson.{BsonDocument, Document, UuidRepresentation}
+import org.bson.{ BsonDocument, UuidRepresentation }
 import org.bson.codecs.{PatternCodec, UuidCodecProvider}
 import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
 import org.bson.conversions.Bson
@@ -34,7 +34,7 @@ import org.bson.types.ObjectId
 
 import com.mongodb._
 import com.mongodb.client.{MongoCollection, MongoDatabase}
-import com.mongodb.client.model.{DeleteOptions, IndexOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
+import com.mongodb.client.model.{ InsertOneOptions, ReplaceOptions }
 import com.mongodb.client.model.Filters.{eq => eqs}
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
 

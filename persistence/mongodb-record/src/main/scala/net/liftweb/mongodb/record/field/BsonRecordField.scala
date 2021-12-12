@@ -29,7 +29,7 @@ import net.liftweb.util.Helpers.tryo
 import com.mongodb._
 
 import org.bson._
-import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, Encoder, EncoderContext, StringCodec}
+import org.bson.codecs.{ BsonTypeCodecMap, DecoderContext, Encoder, EncoderContext, StringCodec }
 import org.bson.codecs.configuration.CodecRegistry
 
 import scala.collection.mutable
@@ -105,10 +105,10 @@ abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecor
 }
 
 class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-(@deprecatedName('rec) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
+(@deprecatedName(Symbol("rec")) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends BsonRecordTypedField(owner, valueMeta) with MandatoryTypedField[SubRecordType] {
 
-  def this(@deprecatedName('rec) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
     this(owner, value.meta)
     set(value)
   }
@@ -125,10 +125,10 @@ class OptionalBsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType 
  * List of BsonRecords
  */
 class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-  (@deprecatedName('rec) owner: OwnerType, val valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
+  (@deprecatedName(Symbol("rec")) owner: OwnerType, val valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
   extends MongoListField[OwnerType, SubRecordType](owner: OwnerType) {
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   override def validations = ((elems: ValueType) => elems.flatMap(_.validate)) :: super.validations
 

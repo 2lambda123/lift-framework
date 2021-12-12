@@ -26,8 +26,6 @@ import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
 import org.bson._
-import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, EncoderContext}
-import org.bson.codecs.configuration.CodecRegistry
 
 import scala.xml.NodeSeq
 
@@ -82,7 +80,7 @@ trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[J
   def asJValue: JValue = valueBox openOr (JNothing: JValue)
 }
 
-class JObjectField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+class JObjectField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends JObjectTypedField[OwnerType] with MandatoryTypedField[JObject] {
 
   def this(owner: OwnerType, value: JObject) = {

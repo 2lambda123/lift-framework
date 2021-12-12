@@ -40,8 +40,8 @@ trait ManyToMany extends BaseKeyedMapper {
    * Returns false as soon as the parent or a one-to-many field returns false.
    * If they are all successful returns true.
    */
-  abstract override def save: Boolean = {
-    super.save && manyToManyFields.forall(_.save)
+  abstract override def save(): Boolean = {
+    super.save() && manyToManyFields.forall(_.save())
   }
 
   /**
@@ -74,7 +74,7 @@ trait ManyToMany extends BaseKeyedMapper {
     val qp: QueryParam[O]*) extends scala.collection.mutable.Buffer[T2] {
 
     def otherFK[A](join: O)(f: MappedForeignKey[K2,O,T2] => A): A =
-      otherField.actualField(join) match { case mfk: MappedForeignKey[K2,O,T2] => f(mfk) }
+      otherField.actualField(join) match { case mfk: MappedForeignKey[K2,O,T2] @unchecked => f(mfk) }
 
     protected def children: List[T2] = joins.flatMap(otherFK(_)(_.obj))
 
@@ -101,7 +101,7 @@ trait ManyToMany extends BaseKeyedMapper {
           .fold{
             val newJoin = joinMeta.create
             thisField.actualField(newJoin) match {
-              case mfk: MappedForeignKey[K, O, T] => mfk.set(primaryKeyField.get.asInstanceOf[K])
+              case mfk: MappedForeignKey[K, O, T] @unchecked => mfk.set(primaryKeyField.get.asInstanceOf[K])
             }
             otherFK(newJoin)(_.apply(e))
             newJoin
@@ -214,7 +214,7 @@ trait ManyToMany extends BaseKeyedMapper {
      * 5) If step 3 succeeds save all join instances
      * 6) Return true if steps 2-4 all returned true; otherwise false
      */
-    def save: Boolean = {
+    def save(): Boolean = {
       _joins = joins.filter { join =>
         otherFK(join)(f => f.get != f.defaultValue)
       }
@@ -223,8 +223,8 @@ trait ManyToMany extends BaseKeyedMapper {
       }
 
       removedJoins.forall {_.delete_!} & ( // continue saving even if deleting fails
-        children.forall(_.save) &&
-          joins.forall(_.save)
+        children.forall(_.save()) &&
+          joins.forall(_.save())
       )
     }
 

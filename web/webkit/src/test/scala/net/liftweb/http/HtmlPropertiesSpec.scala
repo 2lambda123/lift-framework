@@ -18,17 +18,12 @@ package http
 
 import mockweb._
 
-
-import scala.xml.NodeSeq
-
-import common.{ Box, Empty, Full }
-
 /**
 * This only exists to keep the WebSpecSpec clean. Normally,
 * you could just use "() => bootstrap.Boot.boot".
 */
 object HtmlPropertiesSpecBoot {
-  def boot() {
+  def boot(): Unit = {
     LiftRules.htmlProperties.default.set((_: Req) match {
       case r @ Req("html5" :: _, _, _) =>
         println("Html5 request: " + r)

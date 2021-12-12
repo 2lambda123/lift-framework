@@ -18,8 +18,6 @@ package bootstrap.liftweb
 
 import net.liftweb.util._
 import net.liftweb.http._
-import net.liftweb.sitemap._
-import net.liftweb.sitemap.Loc._
 import Helpers._
 
 /**
@@ -27,7 +25,7 @@ import Helpers._
   * to modify lift's environment
   */
 class Boot {
-  def boot {
+  def boot(): Unit = {
     // where to search snippet
     LiftRules.addToPackages("net.liftweb.webapptest")
 

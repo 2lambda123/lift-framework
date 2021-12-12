@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import net.liftweb.common.{Box, Full, Empty}
+import net.liftweb.common.{Box, Full}
 import net.liftweb.util._
 import Helpers._
 import java.net.{URL, URLConnection, JarURLConnection}
@@ -131,11 +131,11 @@ object ResourceServer {
 
   private def isAllowed(path: List[String]) = allowedPaths.isDefinedAt(path) && allowedPaths(path)
 
-  def allow(path: PartialFunction[List[String], Boolean]) {
+  def allow(path: PartialFunction[List[String], Boolean]): Unit = {
     allowedPaths = path orElse allowedPaths
   }
 
-  def rewrite(rw: PartialFunction[List[String], List[String]]) {
+  def rewrite(rw: PartialFunction[List[String], List[String]]): Unit = {
     pathRewriter = rw orElse pathRewriter
   }
 }

@@ -18,11 +18,9 @@ package net.liftweb
 package http
 package testing
 
-import scala.language.implicitConversions
 
 import net.liftweb.util.Helpers._
-import net.liftweb.common.{ Box, Full, Empty, Failure}
-import net.liftweb.util.{Helpers}
+import net.liftweb.common.{ Box, Full, Empty }
 import scala.collection.mutable.ListBuffer
 
 class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertListeners: List[String => Any],  afterAssertListeners: List[(String, Boolean) => Any],
@@ -54,12 +52,12 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
       }
     }
 
-    def beforeTest(name: String) {
+    def beforeTest(name: String): Unit = {
       log += Tracker(name, false, true, true, Empty, Nil)
       beforeTestListeners.foreach(_(name))
     }
 
-    def afterTest(name: String, success: Boolean, excp: Box[Throwable], trace: List[StackTraceElement]) {
+    def afterTest(name: String, success: Boolean, excp: Box[Throwable], trace: List[StackTraceElement]): Unit = {
       log += Tracker(name, false, false, success, excp, trace)
       afterTestListeners.foreach(_(name, success, excp, trace))
     }
@@ -68,7 +66,7 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
 
   def run: TestResults = {
 
-    def doResetDB {
+    def doResetDB: Unit = {
       clearDB.foreach(_())
       setupDB.foreach(_())
     }
@@ -76,7 +74,7 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
     doResetDB
 
 
-    def runASingleTest(testItem: Item) {
+    def runASingleTest(testItem: Item): Unit = {
       beforeTest(testItem.name)
 
       val myTrace =
@@ -103,9 +101,9 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
       afterTest(testItem.name, success, excp, trace)
     }
 
-    def runForkTest(testItem: Item, cnt: Int) {
+    def runForkTest(testItem: Item, cnt: Int): Unit = {
       val threads = for (n <- (1 to cnt).toList) yield {
-        val thread = new Thread(new Runnable {def run {
+        val thread = new Thread(new Runnable {def run: Unit = {
       beforeTest(testItem.name+" thread "+n)
 
       val myTrace =
@@ -136,7 +134,7 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
         thread
       }
 
-      def waitAll(in: List[Thread]) {
+      def waitAll(in: List[Thread]): Unit = {
         in match {
           case Nil =>
           case x :: xs => x.join; waitAll(xs)
@@ -159,13 +157,12 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
     TestResults(log.toList)
   }
 
-  (run _, applyAssert _)
+  (() => run, applyAssert _)
 }
 }
 
 case class TestResults(res: List[Tracker]) {
   def stats = {
-    val rev = res.reverse
     val start = res.map(_.at).reduceLeft((a: Long, b: Long) => if (a < b) a else b)
     val end = res.map(_.at).reduceLeft((a: Long, b: Long) => if (a > b) a else b)
     val assertCnt = res.filter(a => a.isAssert && !a.isBegin).length

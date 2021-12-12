@@ -27,7 +27,6 @@ import net.liftweb.http._
 import net.liftweb.http.provider._
 import net.liftweb.http.provider.servlet._
 import net.liftweb.util._
-import Helpers._
 
 
 object Jetty6AsyncProvider extends AsyncProviderMeta {
@@ -106,7 +105,7 @@ class Jetty6AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with Lo
     try {
       val cont = getContinuation.invoke(contSupport, servletReq, LiftRules)
       logger.trace("About to suspend continuation")
-      val b = suspendMeth.invoke(cont, new java.lang.Long(timeout)).asInstanceOf[Boolean]
+      val b = suspendMeth.invoke(cont, java.lang.Long.valueOf(timeout)).asInstanceOf[Boolean]
       if (!b) RetryState.TIMED_OUT else RetryState.RESUMED
     } catch {
       case e: java.lang.reflect.InvocationTargetException if e.getCause.getClass.getName.endsWith("RetryRequest") =>

@@ -24,9 +24,7 @@ import scala.xml._
 import common._
 import util._
 import Helpers._
-import http.{S, SHtml}
-import S._
-
+import http.SHtml
 
 object TimeZoneField {
   lazy val timeZoneList: List[(String, String)] = TimeZone.getAvailableIDs.toList.
@@ -52,7 +50,8 @@ trait TimeZoneTypedField extends StringTypedField {
     }
 }
 
-class TimeZoneField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class TimeZoneField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType)
   extends StringField(owner, 32) with TimeZoneTypedField {
 
   override def defaultValue = TimeZone.getDefault.getID
@@ -63,6 +62,7 @@ class TimeZoneField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner:
   }
 }
 
-class OptionalTimeZoneField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalTimeZoneField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType)
   extends OptionalStringField(owner, 32) with TimeZoneTypedField
 

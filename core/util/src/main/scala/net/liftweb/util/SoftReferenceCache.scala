@@ -23,11 +23,7 @@ import Map._
 import concurrent.locks._
 
 import common._
-import util._
 import Helpers._
-import Schedule._
-import java.lang.Thread._
-
 
 /**
  * Companion module that has the role of monitoring garbage collected references and remove the orphaned
@@ -54,7 +50,7 @@ object SoftReferenceCache {
     // A daemon thread is more approapriate here then an Actor as
     // we'll do blocking reads from the reference queue
     val thread = new Thread(new Runnable() {
-      def run() {
+      def run(): Unit = {
         processQueue
       }
     })
@@ -70,7 +66,7 @@ object SoftReferenceCache {
     terminated = true;
   }
 
-  private def processQueue {
+  private def processQueue: Unit = {
     while (!terminated) {
       tryo {
         // Wait 30 seconds for something to appear in the queue.

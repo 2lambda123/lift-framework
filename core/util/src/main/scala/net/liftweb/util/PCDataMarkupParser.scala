@@ -23,7 +23,7 @@ import scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, Constructing
 import scala.xml.dtd._
 import scala.xml._
 import java.io.InputStream
-import scala.io.{ Codec, Source }
+import scala.io.Source
 
 /**
  * Utilities for simplifying use of named HTML symbols.
@@ -79,17 +79,16 @@ trait PCDataMarkupParser[PCM <: MarkupParser with MarkupHandler] extends MarkupP
    */
   override def xCharData: NodeSeq = {
     xToken("[CDATA[")
-    val pos1 = pos
     val sb: StringBuilder = new StringBuilder()
     while (true) {
       if (ch==']'  &&
-          { sb.append(ch); nextch; ch == ']' } &&
-          { sb.append(ch); nextch; ch == '>' } ) {
+          { sb.append(ch); nextch(); ch == ']' } &&
+          { sb.append(ch); nextch(); ch == '>' } ) {
         sb.setLength(sb.length - 2);
-        nextch;
+        nextch()
         return PCData(sb.toString)
       } else sb.append( ch );
-      nextch;
+      nextch()
     }
     throw FatalError("this cannot happen");
   }
@@ -106,10 +105,8 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
     var scope: NamespaceBinding = pscope
     var aMap: MetaData = Null
     while (isNameStart(ch)) {
-      val pos = this.pos
-
       val qname = xName
-      val _     = xEQ
+      val _     = xEQ()
       val value = xAttributeValue()
 
       Utility.prefix(qname) match {
@@ -129,7 +126,7 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
       }
 
       if ((ch != '/') && (ch != '>') && ('?' != ch))
-      xSpace;
+      xSpace()
     }
 
     def findIt(base: MetaData, what: MetaData): MetaData = (base, what) match {
@@ -151,7 +148,7 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
   /**
    * report a syntax error
    */
-  override def reportSyntaxError(pos: Int, msg: String) {
+  override def reportSyntaxError(pos: Int, msg: String): Unit = {
 
     //error("MarkupParser::synerr") // DEBUG
     import scala.io._
@@ -190,8 +187,8 @@ object PCDataXmlParser {
   private def apply(source: Source): Box[NodeSeq] = {
     for {
       p <- tryo{new PCDataXmlParser(source)}
-      _ = while (p.ch != '<' && p.curInput.hasNext) p.nextch // side effects, baby
-      bd <- tryo(p.document)
+      _ = while (p.ch != '<' && p.curInput.hasNext) p.nextch() // side effects, baby
+      bd <- tryo(p.document())
       doc <- Box !! bd
     } yield (doc.children: NodeSeq)
 
@@ -200,7 +197,7 @@ object PCDataXmlParser {
   def apply(in: String): Box[NodeSeq] = {
     var pos = 0
     val len = in.length
-    def moveToLT() {
+    def moveToLT(): Unit = {
       while (pos < len && in.charAt(pos) != '<') {
         pos += 1
       }
@@ -327,7 +324,7 @@ object AltXML {
     case _ => // dunno what it is, but ignore it
   }
 
-  private def escape(str: String, sb: StringBuilder, reverse: Boolean) {
+  private def escape(str: String, sb: StringBuilder, reverse: Boolean): Unit = {
     val len = str.length
     var pos = 0
     while (pos < len) {
@@ -439,7 +436,7 @@ object AltXML {
                     convertAmp: Boolean, legacyIeCompatibilityMode: Boolean): Unit = {
     val it = children.iterator
     while (it.hasNext) {
-      toXML(it.next, pscope, sb, stripComment, convertAmp, legacyIeCompatibilityMode)
+      toXML(it.next(), pscope, sb, stripComment, convertAmp, legacyIeCompatibilityMode)
     }
   }
 
@@ -454,7 +451,7 @@ object AltXML {
                     convertAmp: Boolean): Unit = {
     val it = children.iterator
     while (it.hasNext) {
-      toXML(it.next, pscope, sb, stripComment, convertAmp)
+      toXML(it.next(), pscope, sb, stripComment, convertAmp)
     }
   }
 

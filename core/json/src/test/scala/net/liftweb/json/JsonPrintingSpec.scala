@@ -38,7 +38,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
 
   "rendering special double values by default" should {
     "render a standard double as is" in {
-      val double = Random.nextDouble
+      val double = Random.nextDouble()
       JsonAST.compactRender(JDouble(double)) must_== double.toString
     }
 
@@ -64,7 +64,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     }
 
     "render a standard double as is" in {
-      val double = Random.nextDouble
+      val double = Random.nextDouble()
       render(JDouble(double)) must_== double.toString
     }
 
@@ -90,7 +90,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     }
 
     "render a standard double as is" in {
-      val double = Random.nextDouble
+      val double = Random.nextDouble()
       render(JDouble(double)) must_== double.toString
     }
 
@@ -107,6 +107,11 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     }
   }
 
+  // When the json parsing code is completely removed from the library, use an
+  // external library to make the comparison. For example: spray.json.JsonParser(json).
+  // How to include spray:
+  // libraryDependencies in ThisBuild += "io.spray" %%  "spray-json" % "1.3.6"
+  @scala.annotation.nowarn("msg=object JSON in package json is deprecated \\(since 1.0.6\\): Use The Scala Library Index to find alternatives: https://index.scala-lang.org/")
   private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)
 
   implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)

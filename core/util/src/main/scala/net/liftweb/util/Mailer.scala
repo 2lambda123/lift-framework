@@ -22,7 +22,6 @@ import javax.mail.internet._
 import javax.naming.{Context, InitialContext}
 import java.util.Properties
 
-import scala.language.implicitConversions
 import scala.xml.{Text, Elem, Node, NodeSeq}
 
 import common._
@@ -138,7 +137,7 @@ trait Mailer extends SimpleInjector {
    * To change the way the host is calculated, set this to the function that calcualtes the host name.
    * By default: System.getProperty("mail.smtp.host")
    */
-  var hostFunc: () => String = _host _
+  var hostFunc: () => String = () => _host
 
   private def _host = properties.getProperty("mail.smtp.host") match {
     case null => "localhost"
@@ -222,11 +221,11 @@ trait Mailer extends SimpleInjector {
   /**
    * Synchronously send an email.
    */
-  def blockingSendMail(from: From, subject: Subject, rest: MailTypes*) {
+  def blockingSendMail(from: From, subject: Subject, rest: MailTypes*): Unit = {
     msgSendImpl(from, subject, rest.toList)
   }
 
-  def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]) {
+  def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]): Unit = {
     val session = authenticator match {
       case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
       case _ => jndiSession openOr Session.getInstance(buildProps)
@@ -354,7 +353,7 @@ trait Mailer extends SimpleInjector {
   /**
    * Asynchronously send an email.
    */
-  def sendMail(from: From, subject: Subject, rest: MailTypes*) {
+  def sendMail(from: From, subject: Subject, rest: MailTypes*): Unit = {
     // forward it to an actor so there's no time on this thread spent sending the message
     msgSender ! MessageInfo(from, subject, rest.toList)
   }

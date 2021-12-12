@@ -22,7 +22,6 @@ import java.util.regex._
 import java.lang.Character._
 import java.lang.{StringBuilder => GoodSB}
 
-import scala.language.implicitConversions
 import scala.xml.NodeSeq
 
 import common._
@@ -58,7 +57,7 @@ trait StringHelpers {
     })
     val map: Map[String, String] = Map.empty
 
-    (map /: list)((m, next) => m + (next))
+    list.foldLeft(map)(_ + (_))
   }
 
   /**

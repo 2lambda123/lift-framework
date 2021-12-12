@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Type, InvocationTargetException}
+import java.lang.reflect.{Constructor => JConstructor, InvocationTargetException}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import java.sql.Timestamp
@@ -79,7 +79,7 @@ object Extraction {
         case null => JNull
         case x: JValue => x
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
+        case x: Map[_, _] => JObject((x map { case (k, v) => JField(k.asInstanceOf[String], decompose(v)) }).toList)
         case x: Iterable[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
@@ -157,11 +157,9 @@ object Extraction {
     }
 
     def submap(prefix: String): Map[String, String] =
-      Map(
-        map.filter(t => t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(
-          t => (t._1.substring(prefix.length), t._2)
-        ).toList.toArray: _*
-      )
+      map.filter(t => t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(
+        t => (t._1.substring(prefix.length), t._2)
+      ).toMap
 
     val ArrayProp = new Regex("""^(\.([^\.\[]+))\[(\d+)\].*$""")
     val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
@@ -321,8 +319,6 @@ object Extraction {
         }
     }
 
-    def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
-
     def newCollection(root: JValue, m: Mapping, constructor: Array[_] => Any) = {
       val array: Array[_] = root match {
         case JArray(arr)      => arr.map(build(_, m)).toArray
@@ -371,7 +367,7 @@ object Extraction {
       }
     }
 
-    def build(root: JValue, mapping: Mapping): Any = mapping match {
+    def build(root: JValue, mapping: Mapping): Any = (mapping: @unchecked) match {
       case Value(targetType) =>
         convert(root, targetType, formats)
 
@@ -397,10 +393,10 @@ object Extraction {
         val c = targetType.clazz
 
         if (custom.isDefinedAt(targetType, root)) custom(targetType, root)
-        else if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
-        else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
+        else if (c == classOf[List[_]]) newCollection(root, m, a => a.toList)
+        else if (c == classOf[Set[_]]) newCollection(root, m, a => a.toSet)
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
-        else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a: _*))
+        else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => a.toList)
         else if (c == classOf[Option[_]]) newOption(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
       case Dict(m) => root match {
@@ -415,12 +411,6 @@ object Extraction {
       a.foldLeft((newArray(c.getComponentType, a.length), 0)) { (tuple, e) => {
         java.lang.reflect.Array.set(tuple._1, tuple._2, e); (tuple._1, tuple._2 + 1)
       }}._1
-    }
-
-    def mkList(root: JValue, m: Mapping) = root match {
-      case JArray(arr) => arr.map(build(_, m))
-      case JNothing | JNull => Nil
-      case x => fail("Expected array but got " + x)
     }
 
     def mkValue(root: JValue, mapping: Mapping, path: String, optional: Boolean) = {
@@ -446,24 +436,24 @@ object Extraction {
 
   private def convert(json: JValue, targetType: Class[_], formats: Formats): Any = json match {
     case JInt(x) if (targetType == classOf[Int]) => x.intValue
-    case JInt(x) if (targetType == classOf[JavaInteger]) => new JavaInteger(x.intValue)
+    case JInt(x) if (targetType == classOf[JavaInteger]) => JavaInteger.valueOf(x.intValue)
     case JInt(x) if (targetType == classOf[BigInt]) => x
     case JInt(x) if (targetType == classOf[Long]) => x.longValue
-    case JInt(x) if (targetType == classOf[JavaLong]) => new JavaLong(x.longValue)
+    case JInt(x) if (targetType == classOf[JavaLong]) => JavaLong.valueOf(x.longValue)
     case JInt(x) if (targetType == classOf[Double]) => x.doubleValue
-    case JInt(x) if (targetType == classOf[JavaDouble]) => new JavaDouble(x.doubleValue)
+    case JInt(x) if (targetType == classOf[JavaDouble]) => JavaDouble.valueOf(x.doubleValue)
     case JInt(x) if (targetType == classOf[Float]) => x.floatValue
-    case JInt(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
+    case JInt(x) if (targetType == classOf[JavaFloat]) => JavaFloat.valueOf(x.floatValue)
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
-    case JInt(x) if (targetType == classOf[JavaShort]) => new JavaShort(x.shortValue)
+    case JInt(x) if (targetType == classOf[JavaShort]) => JavaShort.valueOf(x.shortValue)
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
-    case JInt(x) if (targetType == classOf[JavaByte]) => new JavaByte(x.byteValue)
+    case JInt(x) if (targetType == classOf[JavaByte]) => JavaByte.valueOf(x.byteValue)
     case JInt(x) if (targetType == classOf[String]) => x.toString
     case JInt(x) if (targetType == classOf[Number]) => x.longValue
     case JDouble(x) if (targetType == classOf[Double]) => x
-    case JDouble(x) if (targetType == classOf[JavaDouble]) => new JavaDouble(x)
+    case JDouble(x) if (targetType == classOf[JavaDouble]) => JavaDouble.valueOf(x)
     case JDouble(x) if (targetType == classOf[Float]) => x.floatValue
-    case JDouble(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
+    case JDouble(x) if (targetType == classOf[JavaFloat]) => JavaFloat.valueOf(x.floatValue)
     case JDouble(x) if (targetType == classOf[String]) => x.toString
     case JDouble(x) if (targetType == classOf[Int]) => x.intValue
     case JDouble(x) if (targetType == classOf[Long]) => x.longValue
@@ -473,7 +463,7 @@ object Extraction {
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JString(s) if (targetType == classOf[Timestamp]) => new Timestamp(formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'")).getTime)
     case JBool(x) if (targetType == classOf[Boolean]) => x
-    case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
+    case JBool(x) if (targetType == classOf[JavaBoolean]) => JavaBoolean.valueOf(x)
     case j: JValue if (targetType == classOf[JValue]) => j
     case j: JObject if (targetType == classOf[JObject]) => j
     case j: JArray if (targetType == classOf[JArray]) => j

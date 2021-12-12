@@ -635,8 +635,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * to expose the functionality.
    */
   protected def updateFromJSON_!(toUpdate: A, json: JsonAST.JObject): A = {
-    import JsonAST._
-
     toUpdate.runSafe {
 
       for {
@@ -687,7 +685,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       } {
         val f = ??(meth, ret)
         f.setFromAny(field.value)
-        if (!markFieldsAsDirty) f.resetDirty
+        if (!markFieldsAsDirty) f.resetDirty()
       }
     }
 
@@ -830,12 +828,11 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       case _ =>
         logger.debug("Saving dbName=%s, entity=%s".format(dbName, toSave))
         /**
-         * @return true if there was exactly one row in the result set, false if not.
+         * Return true if there was exactly one row in the result set, false if not.
          */
         def runAppliers(rs: ResultSet) : Boolean = {
           try {
             if (rs.next) {
-              val meta = rs.getMetaData
               toSave.runSafe {
                 for {
                   indexMap <- thePrimaryKeyField
@@ -857,15 +854,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         /**
          * Checks whether the result set has exactly one row.
          */
-        def hasOneRow(rs: ResultSet) : Boolean = {
-          try {
-            val firstRow = rs.next
-            (firstRow && !rs.next)
-          } finally {
-            rs.close
-          }
-        }
-
         if (saved_?(toSave) && clean_?(toSave)) true else {
           val ret = DB.use(toSave.connectionIdentifier) {
             conn =>
@@ -937,8 +925,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
           for (col <- mappedColumns) {
             val colVal = ??(col._2, toSave)
             if (!columnPrimaryKey_?(col._1) && colVal.dirty_?) {
-              colVal.resetDirty
-              colVal.doneWithSave
+              colVal.resetDirty()
+              colVal.doneWithSave()
             }
           }
 
@@ -957,7 +945,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
 
   def createInstances[T](dbId: ConnectionIdentifier, rs: ResultSet, start: Box[Long], omax: Box[Long], f: A => Box[T]) : List[T] = {
-    var ret = new ListBuffer[T]
+    val ret = new ListBuffer[T]
     val bm = buildMapper(rs)
     var pos = (start openOr 0L) * -1L
     val max = omax openOr java.lang.Long.MAX_VALUE
@@ -1110,7 +1098,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     case (actual, fieldName) if _mappedFields.contains(fieldName) => fieldByName[Any](fieldName, actual).openOrThrowException("we know this is defined")
   }
 
-  def createInstance: A = rootClass.newInstance.asInstanceOf[A]
+  def createInstance: A = rootClass.getDeclaredConstructor().newInstance().asInstanceOf[A]
 
   def fieldOrder: List[BaseOwnedMappedField[A]] = Nil
 
@@ -1804,7 +1792,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
   private def testProdArity(prod: Product): Boolean = {
     var pos = 0
     while (pos < prod.productArity) {
-      if (!prod.productElement(pos).isInstanceOf[QueryParam[A]]) return false
+      if (!prod.productElement(pos).isInstanceOf[QueryParam[A] @unchecked]) return false
       pos = pos + 1
     }
     true
@@ -1866,14 +1854,14 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
 
   def find(key: Any): Box[A] =
   key match {
-    case qp: QueryParam[A] => find(qp)
+    case qp: QueryParam[A] @unchecked => find(qp)
     case prod: Product if (testProdArity(prod)) => find(convertToQPList(prod).toIndexedSeq :_*)
     case key => anyToFindString(key) flatMap (find(_))
   }
 
   def findDb(dbId: ConnectionIdentifier, key: Any): Box[A] =
   key match {
-    case qp: QueryParam[A] => findDb(dbId, List(qp.asInstanceOf[QueryParam[A]]) :_*)
+    case qp: QueryParam[A] @unchecked => findDb(dbId, List(qp.asInstanceOf[QueryParam[A]]) :_*)
     case prod: Product if (testProdArity(prod)) => findDb(dbId, convertToQPList(prod).toIndexedSeq :_*)
     case key => anyToFindString(key) flatMap (find(dbId, _))
   }
@@ -2006,8 +1994,6 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    * is run.
    */
   def formSnippet(html: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
-    val name = internal_dbTableName
-
     def callback(): Unit = {
       cleanup(obj)
     }
@@ -2045,7 +2031,6 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    * the object from <code>viewSnippetSetup</code>.
    */
   def viewTransform(html: NodeSeq): NodeSeq = {
-    val name = internal_dbTableName
     val obj: A = viewSnippetSetup
 
     val otherTransforms =
@@ -2109,14 +2094,14 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    *
    * @param obj mapped object of this metamapper's type
    */
-  def editSnippetCallback(obj: A): Unit = { obj.save }
+  def editSnippetCallback(obj: A): Unit = { obj.save() }
   /**
    * Default callback behavior of the add snippet. Called when the user
    * presses submit. Saves the passed in object.
    *
    * @param obj mapped object of this metamapper's type
    */
-  def addSnippetCallback(obj: A): Unit = { obj.save }
+  def addSnippetCallback(obj: A): Unit = { obj.save() }
 }
 
 

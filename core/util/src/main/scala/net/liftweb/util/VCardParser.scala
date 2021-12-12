@@ -17,7 +17,6 @@
 package net.liftweb
 package util
 
-import scala.collection.mutable._
 import scala.language.postfixOps
 import scala.util.parsing.combinator._
 
@@ -37,7 +36,6 @@ import scala.util.parsing.combinator._
  *
  */
 object VCardParser extends Parsers {
-  import scala.language.implicitConversions
 
   type Elem = Char
 

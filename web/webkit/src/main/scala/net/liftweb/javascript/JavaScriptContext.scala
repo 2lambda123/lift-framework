@@ -1,6 +1,6 @@
 package net.liftweb.javascript
 
-import net.liftweb.http.{TransientRequestVar, RequestVar, LiftRules}
+import net.liftweb.http.{TransientRequestVar, LiftRules}
 import net.liftweb.util._
 import Helpers._
 import org.mozilla.javascript.{NativeJavaObject, ScriptableObject, Context}
@@ -23,7 +23,7 @@ object JavaScriptContext {
    * execution loanwrapper around everything and
    * also slurp in <script> tags with the data-lift-server attribute.
    */
-  def install() {
+  def install(): Unit = {
     LiftRules.allAround.append(JSWrapper)
     LiftRules.tagProcessor.prepend {
       case ("script", e, session) if e.attribute("data-lift-server").isDefined =>
@@ -85,18 +85,18 @@ object JavaScriptContext {
   def exec(str: String): AnyRef = currentScript.get.exec(str)
 
   private class JSScope {
-    private var initted = false
+    private val initted = false
     private var context: Context = null
     private var scope: ScriptableObject = null
 
 
 
-    def init() {
+    def init(): Unit = {
       context = Context.enter()
       scope = context.initStandardObjects()
     }
 
-    def bye() {
+    def bye(): Unit = {
       if (initted) Context.exit()
     }
 

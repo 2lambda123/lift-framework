@@ -22,10 +22,7 @@ import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.proto._
-import net.liftweb.http.{S}
-import java.util.regex._
-import Helpers._
-import S._
+import net.liftweb.http.S
 
 object EmailField {
   def emailPattern = ProtoRules.emailRegexPattern.vend
@@ -45,9 +42,11 @@ trait EmailTypedField extends TypedField[String] {
   override def validations = validateEmail _ :: Nil
 }
 
-class EmailField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, maxLength: Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class EmailField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType, maxLength: Int)
   extends StringField[OwnerType](owner, maxLength) with EmailTypedField
 
-class OptionalEmailField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, maxLength: Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalEmailField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType, maxLength: Int)
   extends OptionalStringField[OwnerType](owner, maxLength) with EmailTypedField
 

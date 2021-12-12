@@ -18,7 +18,6 @@ package net.liftweb
 package util
 
 import common._
-import scala.xml.NodeSeq
 
 trait HasParams {
   def param(name: String): Box[String]
@@ -38,7 +37,6 @@ import net.liftweb.json.JsonAST._
 * make some sense of it.
 */
 object JsonCommand {
-  import scala.language.implicitConversions
 
   implicit def iterableToOption[X](in: Iterable[X]): Option[X] = in.toSeq.headOption
 
@@ -67,7 +65,7 @@ class ResponseInfoHolder {
 
   def docType = _docType
 
-  def docType_=(in: Box[String]) {
+  def docType_=(in: Box[String]): Unit = {
     _docType = in
     _setDocType = true
   }

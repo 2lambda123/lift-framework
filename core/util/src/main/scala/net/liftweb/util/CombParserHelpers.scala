@@ -17,7 +17,6 @@
 package net.liftweb
 package util
 
-import scala.language.implicitConversions
 import scala.util.parsing.combinator.Parsers
 import Helpers._
 
@@ -72,7 +71,7 @@ trait CombParserHelpers {
   def white = wsc
 
   /** @return a unit parser for any repetition of whitespaces */
-  def whiteSpace: Parser[Unit] = rep(white) ^^^ ()
+  def whiteSpace: Parser[Unit] = rep(white) ^^^ ((): Unit)
 
   /** @return a parser accepting a 'line' space, either ' ' or '\t' */
   def aSpace = accept("whitespace", { case c if (c == ' ') || c == '\t' => true })
@@ -85,7 +84,7 @@ trait CombParserHelpers {
    * @return a unit parser which will succeed if the input matches the list of characters regardless
    * of the case (uppercase or lowercase)
    */
-  def acceptCI[ES <% List[Elem]](es: ES): Parser[List[Elem]] =
+  def acceptCI[ES](es: ES)(implicit esToListElem: ES => List[Elem]): Parser[List[Elem]] =
   es.foldRight[Parser[List[Elem]]](
     success(Nil)){(x, pxs) => acceptCIChar(x) ~ pxs ^^ mkList}
 
@@ -122,7 +121,7 @@ trait CombParserHelpers {
    * @return a parser discarding end of lines
    */
   def EOL: Parser[Unit] = (accept("\n\r") | accept("\r\n") | '\r' |
-                           '\n' | EOF ) ^^^ ()
+                           '\n' | EOF ) ^^^ ((): Unit)
 
   def notEOL: Parser[Elem] = (not(EOL) ~> anyChar)
 

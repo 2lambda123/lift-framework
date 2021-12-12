@@ -23,9 +23,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
 
 import common._
-import json._
 import util._
-import Helpers._
 import http.LiftRules
 import http.provider.HTTPRequest
 
@@ -80,6 +78,7 @@ class MapperSpec extends Specification with BeforeEach {
         notNull.moose.get must_== Full(99L)
 
         val disabled = SampleModel.find(By(SampleModel.status, SampleStatus.Disabled))
+        disabled.isEmpty must beFalse
 
         val meow = SampleTag.find(By(SampleTag.tag, "Meow")).openOrThrowException("Test")
 
@@ -136,7 +135,7 @@ class MapperSpec extends Specification with BeforeEach {
         val m = SampleModel.find(2).openOrThrowException("Test")
         val json = m.encodeAsJson()
         val rebuilt = SampleModel.buildFromJson(json)
-        rebuilt.firstName("yak").save
+        rebuilt.firstName("yak").save()
         val recalled = SampleModel.find(2).openOrThrowException("Test")
         recalled.firstName.get must_== "yak"
       }
@@ -147,11 +146,11 @@ class MapperSpec extends Specification with BeforeEach {
 
         (m1 == m2) must_== true
 
-        val s1 = Set(SampleModel.findAll: _*)
+        val s1 = Set(SampleModel.findAll(): _*)
 
         s1.contains(m1) must_== true
 
-        val s2 = s1 ++ SampleModel.findAll
+        val s2 = s1 ++ SampleModel.findAll()
 
         s1.size must_== s2.size
       }
@@ -182,7 +181,7 @@ class MapperSpec extends Specification with BeforeEach {
       }
 
       "Nullable Long works" in {
-        SampleModel.create.firstName("fruit").moose(Full(77L)).save
+        SampleModel.create.firstName("fruit").moose(Full(77L)).save()
 
         SampleModel.findAll(By(SampleModel.moose, Empty)).length must_== 3L
         SampleModel.findAll(NotBy(SampleModel.moose, Empty)).length must_== 2L
@@ -192,18 +191,18 @@ class MapperSpec extends Specification with BeforeEach {
 
       "enforce NOT NULL" in {
         val nullString: String = null
-        SampleModel.create.firstName("Not Null").notNull(nullString).save must throwA[java.sql.SQLException]
+        SampleModel.create.firstName("Not Null").notNull(nullString).save() must throwA[java.sql.SQLException]
       }
 
       "enforce FK constraint on DefaultConnection" in {
         val supportsFK = DB.use(DefaultConnectionIdentifier) { conn => conn.driverType.supportsForeignKeys_? }
         if (!supportsFK) skipped("Driver %s does not support FK constraints".format(provider))
 
-        SampleTag.create.model(42).save must throwA[java.sql.SQLException]
+        SampleTag.create.model(42).save() must throwA[java.sql.SQLException]
       }
 
       "not enforce FK constraint on SnakeConnection" in {
-        SampleTagSnake.create.model(42).save must_== true
+        SampleTagSnake.create.model(42).save() must_== true
       }
 
       "Precache works" in {
@@ -221,6 +220,8 @@ class MapperSpec extends Specification with BeforeEach {
           // nor does it work in MySQL, but it's a MySQL limitation
           //  try { provider.setupDB } catch { case e => skip(e.getMessage) }
           val dogs = Dog.findAll(By(Dog.name, "fido"), OrderBy(Dog.name, Ascending), PreCache(Dog.owner))
+          dogs.length must be_>(0)
+
           val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model))
 
           (oo.length > 0) must beTrue
@@ -231,6 +232,8 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works" in {
         val dogs = Dog.findAll(By(Dog.name, "fido"), PreCache(Dog.owner, false))
+        dogs.length must be_>(0)
+
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         for (t <- oo) yield t.model.cached_? must beTrue
@@ -240,6 +243,8 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works with OrderBy" in {
         val dogs = Dog.findAll(By(Dog.name, "fido"), OrderBy(Dog.name, Ascending), PreCache(Dog.owner, false))
+        dogs.length must be_>(0)
+
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
         for (t <- oo) yield t.model.cached_? must beTrue
@@ -264,7 +269,7 @@ class MapperSpec extends Specification with BeforeEach {
       "work with Mixed case update and delete" in {
         val elwood = Mixer.find(By(Mixer.name, "Elwood")).openOrThrowException("Test")
         elwood.name.get must_== "Elwood"
-        elwood.name("FruitBar").weight(966).save
+        elwood.name("FruitBar").weight(966).save()
 
         val fb = Mixer.find(By(Mixer.weight, 966)).openOrThrowException("Test")
 
@@ -281,7 +286,7 @@ class MapperSpec extends Specification with BeforeEach {
       "work with Mixed case update and delete for Dog2" in {
         val elwood = Dog2.find(By(Dog2.name, "Elwood")).openOrThrowException("Test")
         elwood.name.get must_== "Elwood"
-        elwood.name("FruitBar").actualAge(966).save
+        elwood.name("FruitBar").actualAge(966).save()
 
         val fb = Dog2.find(By(Dog2.actualAge, 966)).openOrThrowException("Test")
 
@@ -295,13 +300,13 @@ class MapperSpec extends Specification with BeforeEach {
       }
 
       "Non-autogenerated primary key items should be savable after a field has been changed" in {
-        val item = TstItem.create.tmdbId(1L).saveMe
-        item.name("test").save must_== true
+        val item = TstItem.create.tmdbId(1L).saveMe()
+        item.name("test").save() must_== true
       }
 
       "we can read and write String primary keys" in {
-        val i1 = Thing.create.name("frog").saveMe
-        val i2 = Thing.create.name("dog").saveMe
+        val i1 = Thing.create.name("frog").saveMe()
+        val i2 = Thing.create.name("dog").saveMe()
 
         Thing.find(By(Thing.thing_id, i1.thing_id.get)).openOrThrowException("Test").name.get must_== "frog"
         Thing.find(By(Thing.thing_id, i2.thing_id.get)).openOrThrowException("Test").name.get must_== "dog"
@@ -315,6 +320,8 @@ class MapperSpec extends Specification with BeforeEach {
           // nor does it work in MySQL, but it's a MySQL limitation
           //  try { provider.setupDB } catch { case e => skip(e.getMessage) }
           val dogs = Dog2.findAll(By(Dog2.name, "fido"), OrderBy(Dog2.name, Ascending), PreCache(Dog2.owner))
+          dogs.length must be_>(0)
+
           val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model))
 
           (oo.length > 0) must beTrue
@@ -325,6 +332,8 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works with Mixed Case" in {
         val dogs = Dog2.findAll(By(Dog2.name, "fido"), PreCache(Dog2.owner, false))
+        dogs.length must be_>(0)
+
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         for (t <- oo) yield t.model.cached_? must beTrue
@@ -345,7 +354,7 @@ class MapperSpec extends Specification with BeforeEach {
         val d2 = (now.getTime - dog.updatedAt.get.getTime) / 100000L
         d2 must_== 0L
 
-        dog.name("ralph").save
+        dog.name("ralph").save()
 
         val dog2 = Dog2.find(dog.dog2id.get).openOrThrowException("Test")
 
@@ -355,6 +364,7 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works with OrderBy with Mixed Case" in {
         val dogs = Dog2.findAll(By(Dog2.name, "fido"), OrderBy(Dog2.name, Ascending), PreCache(Dog2.owner, false))
+        dogs.length must be_>(0)
 
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
@@ -366,7 +376,7 @@ class MapperSpec extends Specification with BeforeEach {
       "Save flag results in update rather than insert" in {
         val elwood = SampleModel.find(By(SampleModel.firstName, "Elwood")).openOrThrowException("Test")
         elwood.firstName.get must_== "Elwood"
-        elwood.firstName("Frog").save
+        elwood.firstName("Frog").save()
 
         val frog = SampleModel.find(By(SampleModel.firstName, "Frog")).openOrThrowException("Test")
         frog.firstName.get must_== "Frog"

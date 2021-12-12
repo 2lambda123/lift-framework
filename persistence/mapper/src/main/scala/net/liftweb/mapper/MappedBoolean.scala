@@ -20,7 +20,7 @@ package mapper
 import java.sql.Types
 import java.lang.reflect.Method
 import net.liftweb.util.Helpers._
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.SHtml
 import java.util.Date
 import net.liftweb.util._
 import net.liftweb.common._
@@ -105,9 +105,9 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(get))
 
-  def real_convertToJDBCFriendly(value: Boolean): Object = new java.lang.Integer(if (value) 1 else 0)
+  def real_convertToJDBCFriendly(value: Boolean): Object = java.lang.Integer.valueOf(if (value) 1 else 0)
 
-  def jdbcFriendly(field : String) = data.map(v => new java.lang.Integer(if(v) 1 else 0)) openOr null
+  def jdbcFriendly(field : String) = data.map(v => java.lang.Integer.valueOf(if(v) 1 else 0)) openOr null
 
   def asJsExp: JsExp = if (get) JE.JsTrue else JE.JsFalse
 

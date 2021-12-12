@@ -22,7 +22,7 @@ import net.liftweb.common._
 
 import java.util.prefs.BackingStoreException
 import java.util.regex.Pattern
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import net.liftweb.mongodb.record.codecs.{RecordCodec, RecordTypedCodec}
 import net.liftweb.mongodb.record.field._
@@ -30,9 +30,8 @@ import net.liftweb.record.{Field, MetaRecord, Record}
 import net.liftweb.record.field._
 
 import org.bson._
-import org.bson.codecs.{BsonTypeClassMap, Codec, DecoderContext, EncoderContext}
+import org.bson.codecs.{ BsonTypeClassMap, Codec }
 import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
-import org.bson.conversions.Bson
 import com.mongodb._
 
 /** Specialized Record that can be encoded and decoded from BSON (DBObject) */

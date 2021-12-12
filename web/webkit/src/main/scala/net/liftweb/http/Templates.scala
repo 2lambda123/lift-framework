@@ -22,7 +22,6 @@ import java.util.Locale
 import scala.xml._
 import util._
 import Helpers._
-import java.io.InputStream
 
 /**
  * Contains functions for obtaining templates
@@ -190,10 +189,10 @@ object Templates {
             var ret: NodeSeq = null
 
             while (!found && se.hasNext) {
-              val (suffix, parser) = se.next
+              val (suffix, parser) = se.next()
               val le = sl.iterator
               while (!found && le.hasNext) {
-                val p = le.next
+                val p = le.next()
                 val name = pls + p + (if (suffix.length > 0) "." + suffix else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
@@ -255,7 +254,7 @@ object Templates {
               try {
                 tryo(List(classOf[ClassNotFoundException]), Empty)(Class.forName(clsName).asInstanceOf[Class[AnyRef]]).flatMap {
                   c =>
-                          (c.newInstance match {
+                          (c.getDeclaredConstructor().newInstance() match {
                             case inst: InsecureLiftView => c.getMethod(action).invoke(inst)
                             case inst: LiftView if inst.dispatch.isDefinedAt(action) => inst.dispatch(action)()
                             case _ => Empty
@@ -325,14 +324,6 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
   def snippetFailure: LiftRules.SnippetFailures.Value = 
     LiftRules.SnippetFailures.StateInStateless
 }
-
-
-  // FIXME Needed to due to https://issues.scala-lang.org/browse/SI-6541,
-  // which causes existential types to be inferred for the generated
-  // unapply of a case class with a wildcard parameterized type.
-  // Ostensibly should be fixed in 2.12, which means we're a ways away
-  // from being able to remove this, though.
-  import scala.language.existentials
 
   /**
    * Holds a pair of parameters

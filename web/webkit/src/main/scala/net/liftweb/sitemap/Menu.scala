@@ -22,8 +22,6 @@ package sitemap
 // unapply of a case class with a wildcard parameterized type.
 // Ostensibly should be fixed in 2.12, which means we're a ways away
 // from being able to remove this, though.
-import scala.language.existentials
-
 import scala.annotation._
 import net.liftweb.http._
 import net.liftweb.common._
@@ -315,8 +313,6 @@ object Menu extends MenuSingleton {
       def parser = ParamsMenuable.this.parser
 
       def listToFrom(in: List[String]): Box[List[String]] = Full(in)
-      
-      val pathLen = ParamsMenuable.this.path.length
     }
   }
 
@@ -582,7 +578,7 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
   private[sitemap] var _parent: Box[HasKids] = Empty
   private[sitemap] var siteMap: SiteMap = _
 
-  private[sitemap] def init(siteMap: SiteMap) {
+  private[sitemap] def init(siteMap: SiteMap): Unit = {
     this.siteMap = siteMap
     kids.foreach(_._parent = Full(this))
     kids.foreach(_.init(siteMap))
@@ -595,9 +591,9 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
    */
   def rebuild(f: List[Menu] => List[Menu]): Menu = Menu(loc, f(kids.toList) :_*)
 
-  private[sitemap] def validate {
+  private[sitemap] def validate(): Unit = {
     _parent.foreach(p => if (p.isRoot_?) throw new SiteMapException("Menu items with root location (\"/\") cannot have children"))
-    kids.foreach(_.validate)
+    kids.foreach(_.validate())
   }
 
   private[sitemap] def testParentAccess: Either[Boolean, Box[() => LiftResponse]] = _parent match {
@@ -681,7 +677,7 @@ final class ParamLocLink[T](path: List[LocPath], headMatch: Boolean, backToList:
     val ret = new ListBuffer[String]()
     
     @tailrec
-    def merge(path: List[LocPath], params: List[String]) {
+    def merge(path: List[LocPath], params: List[String]): Unit = {
       (path, params) match {
         case (Nil, p) => ret ++= p
         case (* :: ps, Nil) => ret += "?" ; merge(ps, Nil)

@@ -20,7 +20,6 @@ package util
 import java.util.regex.Pattern
 
 import scala.collection.mutable.ListBuffer
-import scala.language.implicitConversions
 
 import common._
 
@@ -129,8 +128,8 @@ class REMatcher(val str: String, val compiled: Pattern) {
     matcher.reset
     val cnt = matcher.groupCount
 
-    def doIt {
-      def runIt(pos: Int) {
+    def doIt: Unit = {
+      def runIt(pos: Int): Unit = {
         if (pos >= cnt) return
         else {ab += f(matcher.group(pos + 1)) ; runIt(pos + 1)}
       }

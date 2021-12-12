@@ -245,8 +245,7 @@ class CssBindHelpersSpec extends Specification with XmlMatchers {
       def anchor(quesType: String, value: String) = {
         <a href="foo" class="selected">(value)</a>
       }
-      var page = 1
-      var elements = List("1","2","3","4")
+      val elements = List("1","2","3","4")
 
       val xml = <div class="lift:Bug.attack bug">
         <div id="question" class="question">
@@ -285,6 +284,8 @@ class CssBindHelpersSpec extends Specification with XmlMatchers {
       val xf = "* [id]" #> "xx" &
         "* [style]" #> "border:thin solid black" &
         "* *" #> <a/>
+
+      xf(<div/>)
       success
     }
 
@@ -564,7 +565,7 @@ class CssBindHelpersSpec extends Specification with XmlMatchers {
 
 
     "Java number support" in {
-      val f = "a *" #> Full(new java.lang.Long(12))
+      val f = "a *" #> Full(java.lang.Long.valueOf(12))
       val xml = <a>Hello</a>
 
       f(xml) must ==/ (<a>12</a>)
@@ -925,7 +926,7 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   bog #> "Hello"
   bog #> <span/>
   bog #> 1
-  bog #> 'foo
+  bog #> Symbol("foo")
   bog #> 44L
   bog #> 1.22
   bog #> false
@@ -964,14 +965,14 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   val nsf: NodeSeq => NodeSeq = bog #> "Hello" &
     bog #> <span/> &
     bog #> 1 &
-    bog #> 'foo &
+    bog #> Symbol("foo") &
     bog #> 44L &
     bog #> false
 
   "foo" #> "Hello"
   "foo" #> <span/>
   "foo" #> 1
-  "foo" #> 'foo
+  "foo" #> Symbol("foo")
   "foo" #> 44L
   "foo" #> false
 
@@ -1004,7 +1005,7 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   val nsf2: NodeSeq => NodeSeq = "foo" #> "Hello" &
     "foo" #> <span/> &
     "foo" #> 1 &
-    "foo" #> 'foo &
+    "foo" #> Symbol("foo") &
     "foo" #> 44L &
     "foo" #> false
 

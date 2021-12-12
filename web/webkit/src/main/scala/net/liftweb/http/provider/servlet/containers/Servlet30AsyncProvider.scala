@@ -20,15 +20,10 @@ package provider
 package servlet 
 package containers 
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet._
-
 import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.http.provider._
 import net.liftweb.http.provider.servlet._
-import net.liftweb.util._
-import Helpers._
 
 
 object Servlet30AsyncProvider extends AsyncProviderMeta {
@@ -102,7 +97,7 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
     asyncCtx = startAsync.invoke(servletReq)
     try {
     	val st = asyncCtx.asInstanceOf[SetTimeout]
-    	st.setTimeout(0l)
+    	st.setTimeout(0L)
     } catch {
     case e: Exception => logger.error("Servlet 3.0 Async: Failed to set timeout", e)
     }

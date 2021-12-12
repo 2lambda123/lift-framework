@@ -18,7 +18,7 @@ package net.liftweb
 package db
 
 import java.lang.reflect.{InvocationHandler,Method,Proxy}
-import java.sql.{Array => SqlArray, _}
+import java.sql.{Array => _, _}
 
 import net.liftweb.util._
 import net.liftweb.common.{Box,Loggable}
@@ -484,7 +484,7 @@ object DBLog {
         }
 
         case "setDate" => {
-            paramMap += args(0).asInstanceOf[Int] -> (args(1) + ":" + args(2))
+            paramMap += args(0).asInstanceOf[Int] -> (args(1).toString + ":" + args(2))
             chain(method,  args)
         }
 
@@ -534,7 +534,7 @@ object DBLog {
         }
 
         case "setTime" => {
-            paramMap += args(0).asInstanceOf[Int] -> (args(1) + ":" + args(2))
+            paramMap += args(0).asInstanceOf[Int] -> (args(1).toString + ":" + args(2))
             chain(method,  args)
         }
 
@@ -544,7 +544,7 @@ object DBLog {
         }
 
         case "setTimestamp" => {
-            paramMap += args(0).asInstanceOf[Int] -> (args(1) + ":" + args(2))
+            paramMap += args(0).asInstanceOf[Int] -> (args(1).toString + ":" + args(2))
             chain(method,  args)
         }
 

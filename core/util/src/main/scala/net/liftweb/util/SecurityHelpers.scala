@@ -17,10 +17,7 @@
 package net.liftweb
 package util
 
-import java.io._
 import java.security._
-import javax.crypto._
-import javax.crypto.spec._
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.XMLConstants
 
@@ -29,8 +26,6 @@ import scala.xml.factory.XMLLoader
 
 import org.apache.commons.codec.binary.Base64
 import org.apache.xerces.impl.Constants
-
-import common._
 
 object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
 
@@ -189,7 +184,7 @@ trait SecurityHelpers {
   def hexEncode(in: Array[Byte]): String = {
     val sb = new StringBuilder
     val len = in.length
-    def addDigit(in: Array[Byte], pos: Int, len: Int, sb: StringBuilder) {
+    def addDigit(in: Array[Byte], pos: Int, len: Int, sb: StringBuilder): Unit = {
       if (pos < len) {
         val b: Int = in(pos)
         val msb = (b & 0xf0) >> 4

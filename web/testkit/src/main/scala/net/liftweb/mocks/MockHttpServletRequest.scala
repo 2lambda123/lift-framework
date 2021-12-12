@@ -22,14 +22,12 @@ import java.net.URL
 import java.security.Principal
 import java.text.ParseException
 import java.util.Collection
-import java.util.Date
 import java.util.Locale
 import java.util.{Enumeration => JEnum}
-import java.util.{HashMap => JHash}
 import javax.servlet._
 import javax.servlet.http._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
 import scala.xml.NodeSeq
 
@@ -127,7 +125,6 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Sets the body to the given json value and content type.
    */
   def body_= (jval : JValue, contentType : String) : Unit = {
-    import json.JsonDSL._
     import json.JsonAST
 
     body = JsonAST.prettyRender(jval).getBytes(charEncoding)
@@ -192,7 +189,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
       null
     }
 
-  def queryString_= (q : String) {
+  def queryString_= (q : String): Unit = {
     if (q != null && q.length > 0) {
       val newParams = ListBuffer[(String,String)]()
 
@@ -307,7 +304,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    *
    * @param url The URL to extract from
    */
-  def processUrl (url : String) {
+  def processUrl (url : String): Unit = {
     if (url.toLowerCase.startsWith("http")) {
       processUrl(new URL(url))
     } else if (url.startsWith("/")) {
@@ -334,7 +331,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * @param url The URL to extract from
    * @param contextPath The servlet context of the request. Defaults to ""
    */
-  def processUrl (url : URL) {
+  def processUrl (url : URL): Unit = {
     // Deconstruct the URL to set values
     url.getProtocol match {
       case "http" => scheme = "http"; secure = false
@@ -373,7 +370,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   /**
    * Adds an "Authorization" header, per RFC1945.
    */
-  def addBasicAuth (user : String, pass : String) {
+  def addBasicAuth (user : String, pass : String): Unit = {
     val hashedCredentials =
       Helpers.base64Encode((user  + ":" + pass).getBytes)
     headers += "Authorization" -> List("Basic " + hashedCredentials)
@@ -547,7 +544,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * A utility method to set the given header to an RFC1123 date
    * based on the given long value (epoch seconds).
    */
-  def setDateHeader(s: String, l: Long) {
+  def setDateHeader(s: String, l: Long): Unit = {
     headers += (s -> List(Helpers.toInternetDate(l)))
   }
 

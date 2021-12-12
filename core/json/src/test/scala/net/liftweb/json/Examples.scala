@@ -26,7 +26,6 @@ class Examples extends AbstractExamples {
 
 trait AbstractExamples extends Specification {
   import Examples._
-  import JsonAST.concat
   import JsonDSL._
 
   def print(value: JValue): String
@@ -216,5 +215,5 @@ object Examples {
 
   val nulls = ("f1" -> (null: String)) ~ ("f2" -> List(null, "s"))
   val quoted = """["foo \" \n \t \r bar"]"""
-  val symbols = ("f1" -> 'foo) ~ ("f2" -> 'bar)
+  val symbols = ("f1" -> Symbol("foo")) ~ ("f2" -> Symbol("bar"))
 }
